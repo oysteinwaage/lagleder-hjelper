@@ -1,0 +1,176 @@
+import { useCallback } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical, Trash2, UserPlus } from 'lucide-react';
+import type { Match, Team, Player } from '@/types';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { buildSubQueue } from '@/lib/utils';
+
+interface SortableItemProps {
+  id: string;
+  index: number;
+  name: string;
+  number?: number;
+  isStarter: boolean;
+  onRemove: (id: string) => void;
+}
+
+function SortableItem({ id, index, name, number, isStarter, onRemove }: SortableItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 border transition-colors cursor-grab active:cursor-grabbing touch-none select-none ${
+        isStarter
+          ? 'bg-emerald-900/30 border-emerald-700/50'
+          : 'bg-slate-700/50 border-slate-700/30'
+      }`}
+      {...attributes}
+      {...listeners}
+    >
+      <GripVertical size={18} className="text-slate-500 shrink-0" />
+      <span className="text-slate-500 text-sm w-5 text-right shrink-0">{index + 1}.</span>
+      {number !== undefined && (
+        <span className="text-emerald-400 font-mono text-sm w-7 shrink-0">#{number}</span>
+      )}
+      <span className="flex-1 text-slate-100 truncate">{name}</span>
+      {isStarter ? (
+        <Badge variant="success">Starter</Badge>
+      ) : (
+        <Badge variant="secondary">Reserve</Badge>
+      )}
+      <button
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={() => onRemove(id)}
+        className="text-slate-500 hover:text-red-400 transition-colors shrink-0 ml-1"
+        title="Fjern fra kamp"
+      >
+        <Trash2 size={14} />
+      </button>
+    </li>
+  );
+}
+
+interface Props {
+  match: Match;
+  team: Team;
+  onUpdateOrder: (newMatchPlayers: Match['matchPlayers'], newSubQueue: Match['subQueue']) => void;
+  onRemoveFromMatch: (playerId: string) => void;
+  onAddToMatch: (player: Player) => void;
+}
+
+export function LineupEditor({ match, team, onUpdateOrder, onRemoveFromMatch, onAddToMatch }: Props) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const sortedPlayers = [...match.matchPlayers].sort((a, b) => a.lineupOrder - b.lineupOrder);
+  const ids = sortedPlayers.map((mp) => mp.playerId);
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIndex = ids.indexOf(active.id as string);
+      const newIndex = ids.indexOf(over.id as string);
+      const reordered = arrayMove(ids, oldIndex, newIndex);
+      const newMatchPlayers = match.matchPlayers.map((mp) => ({
+        ...mp,
+        lineupOrder: reordered.indexOf(mp.playerId),
+        onField: reordered.indexOf(mp.playerId) < match.settings.playersOnField,
+      }));
+      const newSubQueue = buildSubQueue(newMatchPlayers, 0, match.settings.playersOnField);
+      onUpdateOrder(newMatchPlayers, newSubQueue);
+    },
+    [ids, match.matchPlayers, match.settings.playersOnField, onUpdateOrder]
+  );
+
+  const matchPlayerIds = new Set(match.matchPlayers.map((mp) => mp.playerId));
+  const availablePlayers = team.players.filter((p) => !matchPlayerIds.has(p.id));
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Oppstilling</CardTitle>
+        <p className="text-sm text-slate-400">
+          Dra i håndtaket for å endre rekkefølge. De {match.settings.playersOnField} øverste starter.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+            <ul className="space-y-2">
+              {sortedPlayers.map((mp, i) => {
+                const player = team.players.find((p) => p.id === mp.playerId);
+                if (!player) return null;
+                return (
+                  <SortableItem
+                    key={mp.playerId}
+                    id={mp.playerId}
+                    index={i}
+                    name={player.name}
+                    number={player.number}
+                    isStarter={i < match.settings.playersOnField}
+                    onRemove={onRemoveFromMatch}
+                  />
+                );
+              })}
+              {sortedPlayers.length === 0 && (
+                <p className="text-sm text-slate-500 text-center py-3">Ingen spillere i kampen</p>
+              )}
+            </ul>
+          </SortableContext>
+        </DndContext>
+
+        {/* Add available players */}
+        {availablePlayers.length > 0 && (
+          <div className="pt-2 border-t border-slate-700">
+            <p className="text-xs text-slate-500 mb-2 flex items-center gap-1.5">
+              <UserPlus size={13} /> Legg til fra laget
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {availablePlayers.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => onAddToMatch(p)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm bg-slate-700 hover:bg-emerald-800 text-slate-300 hover:text-white border border-slate-600 hover:border-emerald-600 transition-colors"
+                >
+                  <span>+</span>
+                  {p.number !== undefined && (
+                    <span className="text-emerald-400 font-mono">#{p.number}</span>
+                  )}
+                  <span>{p.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
