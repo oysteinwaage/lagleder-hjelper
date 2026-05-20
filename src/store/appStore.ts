@@ -111,7 +111,7 @@ export function useAppStore() {
   );
 
   const createMatch = useCallback(
-    (opponent: string, date: string, time?: string) => {
+    (opponent: string, date: string, time?: string, location?: string) => {
       setState((s) => {
         const team = s.teams.find((t) => t.id === s.activeTeamId);
         if (!team) return s;
@@ -131,6 +131,7 @@ export function useAppStore() {
           opponent,
           date,
           time,
+          location,
           status: 'pending',
           settings,
           matchPlayers,

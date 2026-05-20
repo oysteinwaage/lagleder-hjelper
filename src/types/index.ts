@@ -39,6 +39,7 @@ export interface Match {
   opponent: string;
   date: string;
   time?: string;
+  location?: string;
   status: MatchStatus;
   settings: MatchSettings;
   matchPlayers: MatchPlayer[];

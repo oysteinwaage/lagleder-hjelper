@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Match, Team } from '@/types';
+import { formatDate } from '@/lib/utils';
 
 interface Props {
   matches: Match[];
   team: Team;
-  onCreateMatch: (opponent: string, date: string, time?: string) => void;
+  onCreateMatch: (opponent: string, date: string, time?: string, location?: string) => void;
   onDeleteMatch: (id: string) => void;
   onSelectMatch: (id: string) => void;
 }
@@ -24,14 +25,16 @@ export function MatchList({ matches, team, onCreateMatch, onDeleteMatch, onSelec
   const [opponent, setOpponent] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [time, setTime] = useState('');
+  const [location, setLocation] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   function submit() {
     if (!opponent.trim()) return;
-    onCreateMatch(opponent.trim(), date, time || undefined);
+    onCreateMatch(opponent.trim(), date, time || undefined, location.trim() || undefined);
     setOpponent('');
     setTime('');
+    setLocation('');
     setShowForm(false);
   }
 
@@ -82,6 +85,11 @@ export function MatchList({ matches, team, onCreateMatch, onDeleteMatch, onSelec
                 className="w-28"
               />
             </div>
+            <Input
+              placeholder="Sted / banenummer..."
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            />
             <div className="flex gap-2">
               <Button onClick={submit} disabled={!opponent.trim()} className="flex-1">
                 Opprett
@@ -102,7 +110,8 @@ export function MatchList({ matches, team, onCreateMatch, onDeleteMatch, onSelec
               const playerCount = m.matchPlayers.filter((mp) =>
                 team.players.some((p) => p.id === mp.playerId)
               ).length;
-              const when = [m.date, m.time].filter(Boolean).join(' kl. ');
+              const when = [formatDate(m.date), m.time].filter(Boolean).join(' kl. ');
+              const where = m.location;
               const isConfirming = confirmDeleteId === m.id;
               return (
                 <li
@@ -116,6 +125,7 @@ export function MatchList({ matches, team, onCreateMatch, onDeleteMatch, onSelec
                     </div>
                     <div className="text-xs text-slate-500">
                       {when} · {playerCount} spillere
+                      {where && <span> · {where}</span>}
                     </div>
                   </div>
                   <Badge variant={st.variant}>{st.label}</Badge>

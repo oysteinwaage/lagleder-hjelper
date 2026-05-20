@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { FootballPitch } from '@/components/FootballPitch';
 import { SubstitutionPanel } from '@/components/SubstitutionPanel';
 import { LineupEditor } from '@/components/LineupEditor';
-import { formatTime, applySubstitution, buildSubQueue } from '@/lib/utils';
+import { formatTime, formatDate, applySubstitution, buildSubQueue } from '@/lib/utils';
 import type { Match, MatchPlayer, Player, Team } from '@/types';
 
 interface Props {
@@ -136,7 +136,9 @@ export function MatchView({ match, team, onUpdateMatch, onBack }: Props) {
           <h1 className="text-xl font-bold text-slate-100">
             {team.name} vs {match.opponent}
           </h1>
-          <p className="text-sm text-slate-400">{match.date}</p>
+          <p className="text-sm text-slate-400">
+            {formatDate(match.date)}{match.time && ` kl. ${match.time}`}{match.location && ` · ${match.location}`}
+          </p>
         </div>
         <div className="text-right">
           <div className={`text-3xl font-mono font-bold ${isActive ? 'text-emerald-400' : 'text-slate-500'}`}>

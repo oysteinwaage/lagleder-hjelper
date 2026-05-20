@@ -53,9 +53,7 @@ function SortableItem({ id, index, name, isStarter, onRemove }: SortableItemProp
     >
       <GripVertical size={18} className="text-slate-500 shrink-0" />
       <span className="text-slate-500 text-sm w-5 text-right shrink-0">{index + 1}.</span>
-      {number !== undefined && (
-        <span className="text-emerald-400 font-mono text-sm w-7 shrink-0">#{number}</span>
-      )}
+
       <span className="flex-1 text-slate-100 truncate">{name}</span>
       {isStarter ? (
         <Badge variant="success">Starter</Badge>
