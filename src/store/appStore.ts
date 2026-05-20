@@ -76,12 +76,12 @@ export function useAppStore() {
   );
 
   const addPlayer = useCallback(
-    (name: string, number?: number) => {
+    (name: string) => {
       setState((s) => ({
         ...s,
         teams: s.teams.map((t) =>
           t.id === s.activeTeamId
-            ? { ...t, players: [...t.players, { id: generateId(), name, number }] }
+            ? { ...t, players: [...t.players, { id: generateId(), name }] }
             : t
         ),
       }));

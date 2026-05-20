@@ -7,22 +7,20 @@ import type { Team } from '@/types';
 
 interface Props {
   team: Team;
-  onAddPlayer: (name: string, number?: number) => void;
+  onAddPlayer: (name: string) => void;
   onRemovePlayer: (id: string) => void;
   onUpdateTeam: (name: string) => void;
 }
 
 export function TeamSetup({ team, onAddPlayer, onRemovePlayer, onUpdateTeam }: Props) {
   const [playerName, setPlayerName] = useState('');
-  const [playerNumber, setPlayerNumber] = useState('');
   const [editingTeamName, setEditingTeamName] = useState(false);
   const [editName, setEditName] = useState('');
 
   function submitPlayer() {
     if (!playerName.trim()) return;
-    onAddPlayer(playerName.trim(), playerNumber ? parseInt(playerNumber) : undefined);
+    onAddPlayer(playerName.trim());
     setPlayerName('');
-    setPlayerNumber('');
   }
 
   return (
@@ -77,13 +75,6 @@ export function TeamSetup({ team, onAddPlayer, onRemovePlayer, onUpdateTeam }: P
             onKeyDown={(e) => e.key === 'Enter' && submitPlayer()}
             className="flex-1"
           />
-          <Input
-            placeholder="#"
-            value={playerNumber}
-            onChange={(e) => setPlayerNumber(e.target.value)}
-            type="number"
-            className="w-16"
-          />
           <Button onClick={submitPlayer} disabled={!playerName.trim()} size="icon">
             <Plus size={18} />
           </Button>
@@ -96,9 +87,6 @@ export function TeamSetup({ team, onAddPlayer, onRemovePlayer, onUpdateTeam }: P
             {team.players.map((p, i) => (
               <li key={p.id} className="flex items-center gap-3 bg-slate-700/50 rounded-lg px-3 py-2">
                 <span className="text-slate-500 text-sm w-5 text-right">{i + 1}.</span>
-                {p.number !== undefined && (
-                  <span className="text-emerald-400 font-mono text-sm w-6">#{p.number}</span>
-                )}
                 <span className="flex-1 text-slate-100">{p.name}</span>
                 <button
                   onClick={() => onRemovePlayer(p.id)}

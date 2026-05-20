@@ -26,12 +26,11 @@ interface SortableItemProps {
   id: string;
   index: number;
   name: string;
-  number?: number;
   isStarter: boolean;
   onRemove: (id: string) => void;
 }
 
-function SortableItem({ id, index, name, number, isStarter, onRemove }: SortableItemProps) {
+function SortableItem({ id, index, name, isStarter, onRemove }: SortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -134,7 +133,6 @@ export function LineupEditor({ match, team, onUpdateOrder, onRemoveFromMatch, on
                     id={mp.playerId}
                     index={i}
                     name={player.name}
-                    number={player.number}
                     isStarter={i < match.settings.playersOnField}
                     onRemove={onRemoveFromMatch}
                   />
@@ -161,9 +159,6 @@ export function LineupEditor({ match, team, onUpdateOrder, onRemoveFromMatch, on
                   className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm bg-slate-700 hover:bg-emerald-800 text-slate-300 hover:text-white border border-slate-600 hover:border-emerald-600 transition-colors"
                 >
                   <span>+</span>
-                  {p.number !== undefined && (
-                    <span className="text-emerald-400 font-mono">#{p.number}</span>
-                  )}
                   <span>{p.name}</span>
                 </button>
               ))}

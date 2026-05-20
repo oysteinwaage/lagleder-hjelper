@@ -235,9 +235,6 @@ export function MatchView({ match, team, onUpdateMatch, onBack }: Props) {
                         className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm bg-slate-700 hover:bg-emerald-800 text-slate-300 hover:text-white border border-slate-600 hover:border-emerald-600 transition-colors"
                       >
                         <span>+</span>
-                        {p.number !== undefined && (
-                          <span className="text-emerald-400 font-mono">#{p.number}</span>
-                        )}
                         <span>{p.name}</span>
                       </button>
                     ))}
