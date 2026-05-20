@@ -48,6 +48,74 @@ export function MatchList({ matches, team, onCreateMatch, onDeleteMatch, onSelec
     }
   }
 
+  function sortMatches(list: Match[]) {
+    return [...list].sort((a, b) => {
+      const aKey = a.date + (a.time ? 'T' + a.time : 'T00:00');
+      const bKey = b.date + (b.time ? 'T' + b.time : 'T00:00');
+      return aKey.localeCompare(bKey);
+    });
+  }
+
+  function renderMatchList(list: Match[]) {
+    return (
+      <ul className="space-y-2">
+        {sortMatches(list).map((m) => {
+          const st = statusLabel[m.status];
+          const playerCount = m.matchPlayers.filter((mp) =>
+            team.players.some((p) => p.id === mp.playerId)
+          ).length;
+          const when = [formatDate(m.date), m.time].filter(Boolean).join(' kl. ');
+          const where = m.location;
+          const isConfirming = confirmDeleteId === m.id;
+          return (
+            <li
+              key={m.id}
+              className="flex items-center gap-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg px-3 py-3 cursor-pointer transition-colors group"
+              onClick={() => { setConfirmDeleteId(null); onSelectMatch(m.id); }}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-slate-100 truncate">
+                  {team.name} vs {m.opponent}
+                </div>
+                <div className="text-xs text-slate-500">
+                  {when} · {playerCount} spillere
+                  {where && <span> · {where}</span>}
+                </div>
+              </div>
+              <Badge variant={st.variant}>{st.label}</Badge>
+              {isConfirming ? (
+                <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                  <span className="text-xs text-red-400">Slett?</span>
+                  <button
+                    onClick={(e) => handleDeleteClick(e, m.id)}
+                    className="text-xs bg-red-700 hover:bg-red-600 text-white px-2 py-0.5 rounded transition-colors"
+                  >
+                    Ja
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }}
+                    className="text-xs text-slate-400 hover:text-slate-200 px-1"
+                  >
+                    Nei
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={(e) => handleDeleteClick(e, m.id)}
+                  className="text-slate-500 hover:text-red-400 transition-colors"
+                  title="Slett kamp"
+                >
+                  <Trash2 size={15} />
+                </button>
+              )}
+              <ChevronRight size={16} className="text-slate-600 group-hover:text-slate-400 shrink-0" />
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -104,61 +172,15 @@ export function MatchList({ matches, team, onCreateMatch, onDeleteMatch, onSelec
         {matches.length === 0 ? (
           <p className="text-slate-500 text-sm text-center py-4">Ingen kamper opprettet ennå</p>
         ) : (
-          <ul className="space-y-2">
-            {[...matches].reverse().map((m) => {
-              const st = statusLabel[m.status];
-              const playerCount = m.matchPlayers.filter((mp) =>
-                team.players.some((p) => p.id === mp.playerId)
-              ).length;
-              const when = [formatDate(m.date), m.time].filter(Boolean).join(' kl. ');
-              const where = m.location;
-              const isConfirming = confirmDeleteId === m.id;
-              return (
-                <li
-                  key={m.id}
-                  className="flex items-center gap-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg px-3 py-3 cursor-pointer transition-colors group"
-                  onClick={() => { setConfirmDeleteId(null); onSelectMatch(m.id); }}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-slate-100 truncate">
-                      {team.name} vs {m.opponent}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      {when} · {playerCount} spillere
-                      {where && <span> · {where}</span>}
-                    </div>
-                  </div>
-                  <Badge variant={st.variant}>{st.label}</Badge>
-                  {isConfirming ? (
-                    <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                      <span className="text-xs text-red-400">Slett?</span>
-                      <button
-                        onClick={(e) => handleDeleteClick(e, m.id)}
-                        className="text-xs bg-red-700 hover:bg-red-600 text-white px-2 py-0.5 rounded transition-colors"
-                      >
-                        Ja
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }}
-                        className="text-xs text-slate-400 hover:text-slate-200 px-1"
-                      >
-                        Nei
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={(e) => handleDeleteClick(e, m.id)}
-                      className="text-slate-500 hover:text-red-400 transition-colors"
-                      title="Slett kamp"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  )}
-                  <ChevronRight size={16} className="text-slate-600 group-hover:text-slate-400 shrink-0" />
-                </li>
-              );
-            })}
-          </ul>
+          <>
+            {renderMatchList(matches.filter((m) => m.status !== 'completed'))}
+            {matches.some((m) => m.status === 'completed') && (
+              <div className="mt-4">
+                <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Avsluttede kamper</p>
+                {renderMatchList(matches.filter((m) => m.status === 'completed'))}
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
