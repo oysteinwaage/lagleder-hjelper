@@ -99,33 +99,37 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-900">
       {/* Nav */}
-      <nav className="border-b border-slate-800 px-4 py-3 flex items-center gap-2">
-        <span className="text-xl mr-2">⚽</span>
-        <span className="font-semibold text-slate-100 flex-1 truncate">{activeTeam?.name ?? '–'}</span>
-        <button
-          onClick={() => setTab('team')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-            tab === 'team' ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Users size={16} /> Lag
-        </button>
-        <button
-          onClick={() => setTab('matches')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-            tab === 'matches' ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Trophy size={16} /> Kamper
-        </button>
-        <button
-          onClick={() => setTab('admin')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-            tab === 'admin' ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Settings size={16} /> Admin
-        </button>
+      <nav className="border-b border-slate-800 px-4 pt-3 pb-2 flex flex-col items-center gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">⚽</span>
+          <span className="font-semibold text-slate-100 text-lg">{activeTeam?.name ?? '–'}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setTab('team')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+              tab === 'team' ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Users size={16} /> Lag
+          </button>
+          <button
+            onClick={() => setTab('matches')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+              tab === 'matches' ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Trophy size={16} /> Kamper
+          </button>
+          <button
+            onClick={() => setTab('admin')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+              tab === 'admin' ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Settings size={16} /> Admin
+          </button>
+        </div>
       </nav>
 
       <main className="p-4 max-w-2xl mx-auto space-y-4">
