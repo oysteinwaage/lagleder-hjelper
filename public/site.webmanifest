@@ -1,0 +1,23 @@
+{
+  "name": "Lagleder",
+  "short_name": "Lagleder",
+  "description": "Laglederhjelper for fotball",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "/fotball-logo-1.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/fotball-logo-1.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
