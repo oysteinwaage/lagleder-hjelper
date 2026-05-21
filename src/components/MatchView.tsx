@@ -12,6 +12,7 @@ interface Props {
   match: Match;
   team: Team;
   onUpdateMatch: (updater: (m: Match) => Match) => void;
+  onCompleteMatch: (frozenPlayers: MatchPlayer[], finalTime: number) => void;
   onBack: () => void;
 }
 
@@ -22,7 +23,7 @@ function getLiveTime(match: Match): number {
   return match.elapsedSeconds;
 }
 
-export function MatchView({ match, team, onUpdateMatch, onBack }: Props) {
+export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack }: Props) {
   const [animatingIds, setAnimatingIds] = useState<Set<string>>(new Set());
   const [, forceUpdate] = useState(0);
 
@@ -42,21 +43,18 @@ export function MatchView({ match, team, onUpdateMatch, onBack }: Props) {
 
   const endMatch = useCallback(() => {
     const finalTime = getLiveTime(match);
-    onUpdateMatch((m) => {
-      // Freeze each player's accumulated time so the completion summary is correct.
-      const frozenPlayers = m.matchPlayers.map((mp): MatchPlayer => ({
-        ...mp,
-        fieldSeconds: mp.onField
-          ? mp.fieldSeconds + (finalTime - mp.lastEventTime)
-          : mp.fieldSeconds,
-        benchSeconds: !mp.onField
-          ? mp.benchSeconds + (finalTime - mp.lastEventTime)
-          : mp.benchSeconds,
-        lastEventTime: finalTime,
-      }));
-      return { ...m, status: 'completed', elapsedSeconds: finalTime, matchPlayers: frozenPlayers };
-    });
-  }, [match, onUpdateMatch]);
+    const frozenPlayers = match.matchPlayers.map((mp): MatchPlayer => ({
+      ...mp,
+      fieldSeconds: mp.onField
+        ? mp.fieldSeconds + (finalTime - mp.lastEventTime)
+        : mp.fieldSeconds,
+      benchSeconds: !mp.onField
+        ? mp.benchSeconds + (finalTime - mp.lastEventTime)
+        : mp.benchSeconds,
+      lastEventTime: finalTime,
+    }));
+    onCompleteMatch(frozenPlayers, finalTime);
+  }, [match, onCompleteMatch]);
 
   const handleSubstitute = useCallback(
     (outId: string, inId: string) => {

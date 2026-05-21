@@ -48,18 +48,18 @@ export function MatchList({ matches, team, onCreateMatch, onDeleteMatch, onSelec
     }
   }
 
-  function sortMatches(list: Match[]) {
+  function sortMatches(list: Match[], descending = false) {
     return [...list].sort((a, b) => {
       const aKey = a.date + (a.time ? 'T' + a.time : 'T00:00');
       const bKey = b.date + (b.time ? 'T' + b.time : 'T00:00');
-      return aKey.localeCompare(bKey);
+      return descending ? bKey.localeCompare(aKey) : aKey.localeCompare(bKey);
     });
   }
 
-  function renderMatchList(list: Match[]) {
+  function renderMatchList(list: Match[], descending = false) {
     return (
       <ul className="space-y-2">
-        {sortMatches(list).map((m) => {
+        {sortMatches(list, descending).map((m) => {
           const st = statusLabel[m.status];
           const playerCount = m.matchPlayers.filter((mp) =>
             team.players.some((p) => p.id === mp.playerId)
@@ -177,7 +177,7 @@ export function MatchList({ matches, team, onCreateMatch, onDeleteMatch, onSelec
             {matches.some((m) => m.status === 'completed') && (
               <div className="mt-4">
                 <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Avsluttede kamper</p>
-                {renderMatchList(matches.filter((m) => m.status === 'completed'))}
+                {renderMatchList(matches.filter((m) => m.status === 'completed'), true)}
               </div>
             )}
           </>

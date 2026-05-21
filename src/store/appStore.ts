@@ -2,6 +2,31 @@ import { useState, useCallback } from 'react';
 import type { AppState, Team, Match, MatchSettings, MatchPlayer } from '@/types';
 import { generateId, buildSubQueue } from '@/lib/utils';
 
+function sortMatchByPlaytime(match: Match, completedPlayers: MatchPlayer[]): Match {
+  if (match.status !== 'pending') return match;
+  const timeMap = new Map(completedPlayers.map((mp) => [mp.playerId, mp.fieldSeconds]));
+  const sorted = [...match.matchPlayers].sort((a, b) => {
+    const aTime = timeMap.has(a.playerId) ? timeMap.get(a.playerId)! : Infinity;
+    const bTime = timeMap.has(b.playerId) ? timeMap.get(b.playerId)! : Infinity;
+    return aTime - bTime;
+  });
+  const updatedPlayers = match.matchPlayers.map((mp) => {
+    const newOrder = sorted.findIndex((s) => s.playerId === mp.playerId);
+    return { ...mp, lineupOrder: newOrder, onField: newOrder < match.settings.playersOnField };
+  });
+  const subQueue = buildSubQueue(
+    updatedPlayers,
+    0,
+    match.settings.subInterval * 60,
+    (match.settings.firstSubTime ?? 0) * 60
+  );
+  return { ...match, matchPlayers: updatedPlayers, subQueue };
+}
+
+function matchSortKey(m: Match) {
+  return m.date + (m.time ? 'T' + m.time : 'T00:00');
+}
+
 function applySettingsToPendingMatch(match: Match, settings: MatchSettings): Match {
   if (match.status !== 'pending') return match;
   const updatedPlayers = match.matchPlayers.map((mp, i) => ({
@@ -182,6 +207,37 @@ export function useAppStore() {
     [setState]
   );
 
+  const completeMatch = useCallback(
+    (matchId: string, frozenPlayers: MatchPlayer[], finalTime: number) => {
+      setState((s) => {
+        const match = s.matches.find((m) => m.id === matchId);
+        if (!match) return s;
+
+        const completedMatch: Match = {
+          ...match,
+          status: 'completed',
+          elapsedSeconds: finalTime,
+          matchPlayers: frozenPlayers,
+        };
+
+        // Find the next pending match for the same team, sorted by date/time
+        const nextPending = s.matches
+          .filter((m) => m.id !== matchId && m.teamId === match.teamId && m.status === 'pending')
+          .sort((a, b) => matchSortKey(a).localeCompare(matchSortKey(b)))[0];
+
+        return {
+          ...s,
+          matches: s.matches.map((m) => {
+            if (m.id === matchId) return completedMatch;
+            if (nextPending && m.id === nextPending.id) return sortMatchByPlaytime(m, frozenPlayers);
+            return m;
+          }),
+        };
+      });
+    },
+    [setState]
+  );
+
   const updateMatch = useCallback(
     (matchId: string, updater: (m: Match) => Match) => {
       setState((s) => ({
@@ -228,6 +284,7 @@ export function useAppStore() {
     updatePlayer,
     updateDefaultSettings,
     createMatch,
+    completeMatch,
     updateMatch,
     deleteMatch,
     deleteTeam,

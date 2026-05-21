@@ -23,6 +23,7 @@ export default function App() {
     updatePlayer,
     updateDefaultSettings,
     createMatch,
+    completeMatch,
     updateMatch,
     deleteMatch,
     deleteTeam,
@@ -89,6 +90,7 @@ export default function App() {
           match={activeMatch}
           team={activeTeam}
           onUpdateMatch={(updater) => updateMatch(activeMatch.id, updater)}
+          onCompleteMatch={(frozenPlayers, finalTime) => completeMatch(activeMatch.id, frozenPlayers, finalTime)}
           onBack={() => setActiveMatchId(null)}
         />
       </div>
