@@ -76,9 +76,9 @@ export function buildSubQueue(
   return queue;
 }
 
-/** Apply a substitution, returning updated matchPlayers and new subQueue.
- *  If the sub matches the first queue entry, that entry is removed and a new
- *  veteran entry is appended after all remaining entries (spacing: subIntervalSec). */
+/** Apply a substitution, returning updated matchPlayers and updated subQueue.
+ *  Existing valid entries keep their dueTime. Invalid entries (involving the
+ *  swapped players) are removed. One new entry is added at currentTime + subIntervalSec. */
 export function applySubstitution(
   match: Match,
   outPlayerId: string,
@@ -86,7 +86,6 @@ export function applySubstitution(
   currentTime: number
 ): { matchPlayers: MatchPlayer[]; subQueue: { outId: string; inId: string; dueTime: number }[] } {
   const subIntervalSec = match.settings.subInterval * 60;
-  const firstSubTimeSec = (match.settings.firstSubTime ?? 0) * 60;
 
   const updated = match.matchPlayers.map((mp): MatchPlayer => {
     if (mp.playerId === outPlayerId) {
@@ -108,29 +107,21 @@ export function applySubstitution(
     return mp;
   });
 
-  const isQueueSub =
-    match.subQueue.length > 0 &&
-    match.subQueue[0].outId === outPlayerId &&
-    match.subQueue[0].inId === inPlayerId;
+  // Keep entries where both outId is still on field and inId is still on bench.
+  const validQueue = match.subQueue.filter(
+    (e) => e.outId !== outPlayerId && e.inId !== inPlayerId
+  );
 
-  if (isQueueSub) {
-    const remainingQueue = match.subQueue.slice(1);
-    const plannedOutIds = new Set(remainingQueue.map((s) => s.outId));
-    const fieldPlayersNow = updated
-      .filter((mp) => mp.onField)
-      .sort((a, b) => a.lastEventTime - b.lastEventTime);
-    const candidates = fieldPlayersNow.filter((mp) => !plannedOutIds.has(mp.playerId));
-    const newOutId = (candidates.length > 0 ? candidates[0] : fieldPlayersNow[0])?.playerId;
+  // Pick the on-field player not already planned for substitution as the next "out".
+  const plannedOutIds = new Set(validQueue.map((e) => e.outId));
+  const candidates = [...updated.filter((mp) => mp.onField)]
+    .sort((a, b) => a.lastEventTime - b.lastEventTime)
+    .filter((mp) => !plannedOutIds.has(mp.playerId));
 
-    const newQueue = [...remainingQueue];
-    if (newOutId) {
-      const lastDue = newQueue.length > 0 ? newQueue[newQueue.length - 1].dueTime : currentTime;
-      const dueTime = Math.max(lastDue + subIntervalSec, currentTime + subIntervalSec);
-      newQueue.push({ outId: newOutId, inId: outPlayerId, dueTime });
-    }
-    return { matchPlayers: updated, subQueue: newQueue };
+  const newQueue = [...validQueue];
+  if (candidates.length > 0) {
+    newQueue.push({ outId: candidates[0].playerId, inId: outPlayerId, dueTime: currentTime + subIntervalSec });
   }
 
-  const newQueue = buildSubQueue(updated, currentTime, subIntervalSec, firstSubTimeSec);
   return { matchPlayers: updated, subQueue: newQueue };
 }
