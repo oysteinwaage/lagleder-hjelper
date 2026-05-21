@@ -17,48 +17,48 @@ interface PlayerPos {
 }
 
 function getPositions(count: number): { x: number; y: number }[] {
-  if (count === 1) return [{ x: 0.5, y: 0.5 }];
-  if (count === 2) return [{ x: 0.5, y: 0.3 }, { x: 0.5, y: 0.7 }];
+  if (count === 1) return [{ x: 0.5, y: 0.50 }];
+  if (count === 2) return [{ x: 0.5, y: 0.28 }, { x: 0.5, y: 0.72 }];
   if (count === 3) return [
-    { x: 0.5, y: 0.22 },
-    { x: 0.25, y: 0.65 },
-    { x: 0.75, y: 0.65 },
+    { x: 0.5, y: 0.20 },
+    { x: 0.25, y: 0.63 },
+    { x: 0.75, y: 0.63 },
   ];
   if (count === 4) return [
-    { x: 0.5, y: 0.18 },
-    { x: 0.25, y: 0.5 },
-    { x: 0.75, y: 0.5 },
-    { x: 0.5, y: 0.78 },
+    { x: 0.5, y: 0.17 },
+    { x: 0.25, y: 0.50 },
+    { x: 0.75, y: 0.50 },
+    { x: 0.5, y: 0.76 },
   ];
   if (count === 5) return [
-    { x: 0.5, y: 0.15 },
+    { x: 0.5, y: 0.16 },
     { x: 0.2, y: 0.45 },
     { x: 0.8, y: 0.45 },
-    { x: 0.35, y: 0.75 },
-    { x: 0.65, y: 0.75 },
+    { x: 0.35, y: 0.72 },
+    { x: 0.65, y: 0.72 },
   ];
   if (count === 6) return [
-    { x: 0.5, y: 0.12 },
+    { x: 0.5, y: 0.15 },
     { x: 0.2, y: 0.38 },
     { x: 0.8, y: 0.38 },
-    { x: 0.2, y: 0.65 },
-    { x: 0.8, y: 0.65 },
-    { x: 0.5, y: 0.82 },
+    { x: 0.2, y: 0.63 },
+    { x: 0.8, y: 0.63 },
+    { x: 0.5, y: 0.76 },
   ];
   if (count === 7) return [
-    { x: 0.5, y: 0.12 },
+    { x: 0.5, y: 0.15 },
     { x: 0.2, y: 0.35 },
     { x: 0.5, y: 0.35 },
     { x: 0.8, y: 0.35 },
-    { x: 0.2, y: 0.65 },
-    { x: 0.8, y: 0.65 },
-    { x: 0.5, y: 0.78 },
+    { x: 0.2, y: 0.63 },
+    { x: 0.8, y: 0.63 },
+    { x: 0.5, y: 0.76 },
   ];
   const rows = [
-    [{ x: 0.5, y: 0.1 }],
-    [0.2, 0.4, 0.6, 0.8].map((x) => ({ x, y: 0.35 })),
-    [0.25, 0.5, 0.75].map((x) => ({ x, y: 0.6 })),
-    [0.3, 0.5, 0.7].map((x) => ({ x, y: 0.82 })),
+    [{ x: 0.5, y: 0.13 }],
+    [0.2, 0.4, 0.6, 0.8].map((x) => ({ x, y: 0.34 })),
+    [0.25, 0.5, 0.75].map((x) => ({ x, y: 0.57 })),
+    [0.3, 0.5, 0.7].map((x) => ({ x, y: 0.76 })),
   ];
   return rows.flat().slice(0, count);
 }
@@ -70,8 +70,8 @@ export function FootballPitch({ match, team, animatingPlayerIds, currentTime }: 
 
   const positions = getPositions(fieldPlayers.length);
 
-  const W = 340;
-  const H = 500;
+  const W = 320;
+  const H = 200;
 
   const players: PlayerPos[] = fieldPlayers.map((mp, i) => {
     const player = team.players.find((p) => p.id === mp.playerId);
@@ -107,24 +107,20 @@ export function FootballPitch({ match, team, animatingPlayerIds, currentTime }: 
         <rect width={W} height={H} fill="url(#stripes)" />
 
         {/* Outer border */}
-        <rect x={12} y={12} width={W - 24} height={H - 24} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" />
+        <rect x={10} y={10} width={W - 20} height={H - 20} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" />
 
         {/* Centre line */}
-        <line x1={12} y1={H / 2} x2={W - 12} y2={H / 2} stroke="rgba(255,255,255,0.5)" strokeWidth="2" />
+        <line x1={10} y1={H / 2} x2={W - 10} y2={H / 2} stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" />
 
         {/* Centre circle */}
-        <circle cx={W / 2} cy={H / 2} r={45} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" />
-        <circle cx={W / 2} cy={H / 2} r={4} fill="rgba(255,255,255,0.6)" />
+        <circle cx={W / 2} cy={H / 2} r={26} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" />
+        <circle cx={W / 2} cy={H / 2} r={3} fill="rgba(255,255,255,0.6)" />
 
-        {/* Top penalty area */}
-        <rect x={W / 2 - 70} y={12} width={140} height={70} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" />
-        <rect x={W / 2 - 35} y={12} width={70} height={30} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" />
-        <circle cx={W / 2} cy={82} r={4} fill="rgba(255,255,255,0.6)" />
+        {/* Top goal area */}
+        <rect x={W / 2 - 45} y={10} width={90} height={28} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" />
 
-        {/* Bottom penalty area */}
-        <rect x={W / 2 - 70} y={H - 82} width={140} height={70} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" />
-        <rect x={W / 2 - 35} y={H - 42} width={70} height={30} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" />
-        <circle cx={W / 2} cy={H - 82} r={4} fill="rgba(255,255,255,0.6)" />
+        {/* Bottom goal area */}
+        <rect x={W / 2 - 45} y={H - 38} width={90} height={28} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" />
 
         {/* Players */}
         {players.map((p) => {
@@ -133,24 +129,19 @@ export function FootballPitch({ match, team, animatingPlayerIds, currentTime }: 
           return (
             <g key={p.id} transform={`translate(${p.x}, ${p.y})`}>
               {isAnim && (
-                <circle r={22} fill="rgba(251,191,36,0.3)" className="animate-ping" />
+                <circle r={17} fill="rgba(251,191,36,0.3)" className="animate-ping" />
               )}
-              {/* Shadow */}
-              <ellipse cx={0} cy={18} rx={14} ry={5} fill="rgba(0,0,0,0.25)" />
-              {/* Body */}
-              <circle r={16} fill="#1d4ed8" stroke="white" strokeWidth={2} />
-              {/* Jersey stripes */}
-              <line x1={-8} y1={-5} x2={-8} y2={10} stroke="rgba(255,255,255,0.4)" strokeWidth={2} />
-              <line x1={8} y1={-5} x2={8} y2={10} stroke="rgba(255,255,255,0.4)" strokeWidth={2} />
-              {/* Head */}
-              <circle cx={0} cy={-20} r={10} fill="#f5c89a" stroke="white" strokeWidth={1.5} />
-              {/* Name + timer tag */}
-              <rect x={-32} y={25} width={64} height={28} rx={4} fill="rgba(0,0,0,0.70)" />
-              <text x={0} y={37} textAnchor="middle" fill="white" fontSize={9} fontFamily="system-ui, sans-serif" fontWeight="600">
+              <ellipse cx={0} cy={14} rx={11} ry={4} fill="rgba(0,0,0,0.25)" />
+              <circle r={12} fill="#1d4ed8" stroke="white" strokeWidth={1.5} />
+              <line x1={-6} y1={-4} x2={-6} y2={8} stroke="rgba(255,255,255,0.4)" strokeWidth={1.5} />
+              <line x1={6} y1={-4} x2={6} y2={8} stroke="rgba(255,255,255,0.4)" strokeWidth={1.5} />
+              <circle cx={0} cy={-16} r={8} fill="#f5c89a" stroke="white" strokeWidth={1.5} />
+              <rect x={-26} y={16} width={52} height={22} rx={3} fill="rgba(0,0,0,0.70)" />
+              <text x={0} y={26} textAnchor="middle" fill="white" fontSize={8} fontFamily="system-ui, sans-serif" fontWeight="600">
                 {displayName}
               </text>
-              <text x={0} y={49} textAnchor="middle" fill="#86efac" fontSize={9} fontFamily="ui-monospace, monospace" fontWeight="500">
-                {formatTime(p.spellSeconds)}
+              <text x={0} y={35} textAnchor="middle" fill="#86efac" fontSize={8} fontFamily="ui-monospace, monospace" fontWeight="500">
+                {formatTime(Math.max(0, p.spellSeconds))}
               </text>
             </g>
           );
