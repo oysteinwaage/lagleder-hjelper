@@ -2,6 +2,21 @@ import { useState, useCallback } from 'react';
 import type { AppState, Team, Match, MatchSettings, MatchPlayer } from '@/types';
 import { generateId, buildSubQueue } from '@/lib/utils';
 
+function applySettingsToPendingMatch(match: Match, settings: MatchSettings): Match {
+  if (match.status !== 'pending') return match;
+  const updatedPlayers = match.matchPlayers.map((mp, i) => ({
+    ...mp,
+    onField: i < settings.playersOnField,
+  }));
+  const subQueue = buildSubQueue(
+    updatedPlayers,
+    0,
+    settings.subInterval * 60,
+    (settings.firstSubTime ?? 0) * 60
+  );
+  return { ...match, settings: { ...settings }, matchPlayers: updatedPlayers, subQueue };
+}
+
 const STORAGE_KEY = 'lagleder_app_v1';
 
 const DEFAULT_SETTINGS: MatchSettings = {
@@ -120,7 +135,14 @@ export function useAppStore() {
 
   const updateDefaultSettings = useCallback(
     (settings: Partial<MatchSettings>) => {
-      setState((s) => ({ ...s, defaultSettings: { ...s.defaultSettings, ...settings } }));
+      setState((s) => {
+        const merged = { ...s.defaultSettings, ...settings };
+        return {
+          ...s,
+          defaultSettings: merged,
+          matches: s.matches.map((m) => applySettingsToPendingMatch(m, merged)),
+        };
+      });
     },
     [setState]
   );

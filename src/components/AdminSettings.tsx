@@ -67,7 +67,7 @@ export function AdminSettings({ settings, onSave }: Props) {
           {saved ? 'Lagret!' : 'Lagre innstillinger'}
         </Button>
         <p className="text-xs text-slate-500 mt-2 text-center">
-          Endringer gjelder kun for nye kamper
+          Endringer gjelder nye og ikke-påstartede kamper
         </p>
       </CardContent>
     </Card>
