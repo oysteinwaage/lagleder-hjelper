@@ -14,6 +14,7 @@ export interface MatchSettings {
   numberOfHalves: number;
   halfDuration: number; // minutes
   subInterval: number; // minutes
+  firstSubTime: number; // minutes — 0 = disabled, use subInterval from start
 }
 
 export interface MatchPlayer {
@@ -46,7 +47,7 @@ export interface Match {
   elapsedSeconds: number;
   startedAt?: number;
   substitutions: SubstitutionEvent[];
-  subQueue: { outId: string; inId: string }[];
+  subQueue: { outId: string; inId: string; dueTime: number }[];
 }
 
 export interface AppState {

@@ -28,7 +28,8 @@ export function AdminSettings({ settings, onSave }: Props) {
     { key: 'playersOnField', label: 'Spillere på banen', min: 1, max: 11 },
     { key: 'numberOfHalves', label: 'Antall omganger', min: 1, max: 4 },
     { key: 'halfDuration', label: 'Lengde per omgang', unit: 'min', min: 1, max: 90 },
-    { key: 'subInterval', label: 'Bytte-intervall', unit: 'min', min: 1, max: 30 },
+    { key: 'firstSubTime', label: 'Første bytte etter', unit: 'min', min: 0, max: 90 },
+    { key: 'subInterval', label: 'Bytte-intervall (etter alle har vært inne)', unit: 'min', min: 1, max: 30 },
   ];
 
   return (

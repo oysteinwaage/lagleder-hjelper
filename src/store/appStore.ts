@@ -9,6 +9,7 @@ const DEFAULT_SETTINGS: MatchSettings = {
   numberOfHalves: 1,
   halfDuration: 25,
   subInterval: 3,
+  firstSubTime: 0,
 };
 
 function loadState(): AppState {
@@ -124,7 +125,7 @@ export function useAppStore() {
           onField: i < settings.playersOnField,
           lineupOrder: i,
         }));
-        const subQueue = buildSubQueue(matchPlayers, 0, settings.playersOnField);
+        const subQueue = buildSubQueue(matchPlayers, 0, settings.subInterval * 60, (settings.firstSubTime ?? 0) * 60);
         const match: Match = {
           id: generateId(),
           teamId: team.id,

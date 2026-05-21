@@ -78,7 +78,7 @@ export function MatchView({ match, team, onUpdateMatch, onBack }: Props) {
           lineupOrder: i,
           onField: i < m.settings.playersOnField,
         }));
-        const newSubQueue = buildSubQueue(reindexed, m.elapsedSeconds, m.settings.playersOnField);
+        const newSubQueue = buildSubQueue(reindexed, m.elapsedSeconds, m.settings.subInterval * 60, (m.settings.firstSubTime ?? 0) * 60);
         return { ...m, matchPlayers: reindexed, subQueue: newSubQueue };
       });
     },
@@ -98,7 +98,7 @@ export function MatchView({ match, team, onUpdateMatch, onBack }: Props) {
           lineupOrder: maxOrder + 1,
         };
         const newPlayers = [...m.matchPlayers, newEntry];
-        const newSubQueue = buildSubQueue(newPlayers, m.elapsedSeconds, m.settings.playersOnField);
+        const newSubQueue = buildSubQueue(newPlayers, m.elapsedSeconds, m.settings.subInterval * 60, (m.settings.firstSubTime ?? 0) * 60);
         return { ...m, matchPlayers: newPlayers, subQueue: newSubQueue };
       });
     },

@@ -26,35 +26,68 @@ export function formatTime(seconds: number): string {
 }
 
 /** Recalculate the sub queue.
- *  Out priority: longest on field since last subbed on (currentTime - lastEventTime).
- *  In priority:  longest on bench since last subbed off (currentTime - lastEventTime). */
+ *  Out priority: longest on field (smallest lastEventTime).
+ *  In priority:  virgins (fieldSeconds===0) first (longest bench), then veterans.
+ *  Virgin subs use firstSubTimeSec + 60s spacing; veterans use subIntervalSec.
+ *  firstSubTimeSec=0 disables the first-sub logic and uses plain subIntervalSec. */
 export function buildSubQueue(
   matchPlayers: MatchPlayer[],
-  _currentTime: number,
-  _playersOnField: number
-): { outId: string; inId: string }[] {
-  // Smallest lastEventTime = entered/sat down earliest = longest current spell
-  const updatedField = [...matchPlayers.filter((p) => p.onField)]
+  currentTime: number,
+  subIntervalSec: number,
+  firstSubTimeSec = 0
+): { outId: string; inId: string; dueTime: number }[] {
+  const fieldPlayers = [...matchPlayers.filter((p) => p.onField)]
+    .sort((a, b) => a.lastEventTime - b.lastEventTime);
+  const benchPlayers = [...matchPlayers.filter((p) => !p.onField)]
     .sort((a, b) => a.lastEventTime - b.lastEventTime);
 
-  const updatedBench = [...matchPlayers.filter((p) => !p.onField)]
-    .sort((a, b) => a.lastEventTime - b.lastEventTime);
+  const virginBench = benchPlayers.filter((p) => p.fieldSeconds === 0);
+  const veteranBench = benchPlayers.filter((p) => p.fieldSeconds > 0);
+  const orderedBench = [...virginBench, ...veteranBench];
 
-  const queue: { outId: string; inId: string }[] = [];
-  const swapCount = Math.min(updatedField.length, updatedBench.length);
+  const useFirstSub = firstSubTimeSec > 0 && virginBench.length > 0;
+  const virginBaseTime = useFirstSub
+    ? Math.max(firstSubTimeSec, currentTime + 60)
+    : 0;
+
+  const queue: { outId: string; inId: string; dueTime: number }[] = [];
+  const swapCount = Math.min(fieldPlayers.length, orderedBench.length);
+  let lastDueTime = currentTime;
+
   for (let i = 0; i < swapCount; i++) {
-    queue.push({ outId: updatedField[i].playerId, inId: updatedBench[i].playerId });
+    const isVirgin = i < virginBench.length;
+    let dueTime: number;
+
+    if (useFirstSub && isVirgin) {
+      dueTime = virginBaseTime + i * 60;
+    } else if (useFirstSub) {
+      dueTime = lastDueTime + subIntervalSec;
+    } else {
+      dueTime = currentTime + (i + 1) * subIntervalSec;
+    }
+
+    lastDueTime = dueTime;
+    queue.push({
+      outId: fieldPlayers[i].playerId,
+      inId: orderedBench[i].playerId,
+      dueTime,
+    });
   }
   return queue;
 }
 
-/** Apply a substitution, returning updated matchPlayers and new subQueue */
+/** Apply a substitution, returning updated matchPlayers and new subQueue.
+ *  If the sub matches the first queue entry, that entry is removed and a new
+ *  veteran entry is appended after all remaining entries (spacing: subIntervalSec). */
 export function applySubstitution(
   match: Match,
   outPlayerId: string,
   inPlayerId: string,
   currentTime: number
-): { matchPlayers: MatchPlayer[]; subQueue: { outId: string; inId: string }[] } {
+): { matchPlayers: MatchPlayer[]; subQueue: { outId: string; inId: string; dueTime: number }[] } {
+  const subIntervalSec = match.settings.subInterval * 60;
+  const firstSubTimeSec = (match.settings.firstSubTime ?? 0) * 60;
+
   const updated = match.matchPlayers.map((mp): MatchPlayer => {
     if (mp.playerId === outPlayerId) {
       return {
@@ -75,6 +108,29 @@ export function applySubstitution(
     return mp;
   });
 
-  const newQueue = buildSubQueue(updated, currentTime, match.settings.playersOnField);
+  const isQueueSub =
+    match.subQueue.length > 0 &&
+    match.subQueue[0].outId === outPlayerId &&
+    match.subQueue[0].inId === inPlayerId;
+
+  if (isQueueSub) {
+    const remainingQueue = match.subQueue.slice(1);
+    const plannedOutIds = new Set(remainingQueue.map((s) => s.outId));
+    const fieldPlayersNow = updated
+      .filter((mp) => mp.onField)
+      .sort((a, b) => a.lastEventTime - b.lastEventTime);
+    const candidates = fieldPlayersNow.filter((mp) => !plannedOutIds.has(mp.playerId));
+    const newOutId = (candidates.length > 0 ? candidates[0] : fieldPlayersNow[0])?.playerId;
+
+    const newQueue = [...remainingQueue];
+    if (newOutId) {
+      const lastDue = newQueue.length > 0 ? newQueue[newQueue.length - 1].dueTime : currentTime;
+      const dueTime = Math.max(lastDue + subIntervalSec, currentTime + subIntervalSec);
+      newQueue.push({ outId: newOutId, inId: outPlayerId, dueTime });
+    }
+    return { matchPlayers: updated, subQueue: newQueue };
+  }
+
+  const newQueue = buildSubQueue(updated, currentTime, subIntervalSec, firstSubTimeSec);
   return { matchPlayers: updated, subQueue: newQueue };
 }
