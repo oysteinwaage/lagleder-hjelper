@@ -202,7 +202,57 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
       {/* Active/Completed */}
       {(isActive || isCompleted) && (
         <div className="space-y-4">
-          <FootballPitch match={match} team={team} animatingPlayerIds={animatingIds} currentTime={currentTime} />
+          {isActive && <FootballPitch match={match} team={team} animatingPlayerIds={animatingIds} currentTime={currentTime} />}
+
+          {/* Completed: summary first, then substitution history */}
+          {isCompleted && (
+            <Card>
+              <CardContent className="pt-4">
+                <p className="text-sm font-medium text-slate-400 mb-3">Spilletid per spiller</p>
+                <div className="space-y-2">
+                  {[...match.matchPlayers]
+                    .sort((a, b) => b.fieldSeconds - a.fieldSeconds)
+                    .map((mp) => {
+                      const name = getPlayerName(mp.playerId);
+                      const total = mp.fieldSeconds;
+                      const pct = match.elapsedSeconds > 0 ? Math.round((total / match.elapsedSeconds) * 100) : 0;
+                      return (
+                        <div key={mp.playerId} className="flex items-center gap-2">
+                          <span className="text-sm text-slate-300 w-32 truncate">{name}</span>
+                          <div className="flex-1 bg-slate-700 rounded-full h-2">
+                            <div
+                              className="bg-emerald-500 h-2 rounded-full transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-mono text-slate-400 w-12 text-right">
+                            {formatTime(total)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {isCompleted && match.substitutions.length > 0 && (
+            <Card>
+              <CardContent className="pt-4">
+                <p className="text-sm font-medium text-slate-400 mb-2">Byttelog</p>
+                <div className="space-y-1.5">
+                  {match.substitutions.map((s, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs text-slate-400">
+                      <span className="font-mono text-slate-500">{formatTime(s.gameTime)}</span>
+                      <span className="text-red-400">{getPlayerName(s.outPlayerId)}</span>
+                      <span>→</span>
+                      <span className="text-emerald-400">{getPlayerName(s.inPlayerId)}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {isActive && (
             <SubstitutionPanel
@@ -214,7 +264,7 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
           )}
 
           {/* Bench */}
-          <Card>
+          {isActive && <Card>
             <CardContent className="pt-4">
               <p className="text-sm font-medium text-slate-400 mb-2">Benken</p>
               <div className="space-y-1.5">
@@ -270,10 +320,10 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
                 </div>
               )}
             </CardContent>
-          </Card>
+          </Card>}
 
           {/* Field player times */}
-          <Card>
+          {isActive && <Card>
             <CardContent className="pt-4">
               <p className="text-sm font-medium text-slate-400 mb-2">På banen</p>
               <div className="space-y-1.5">
@@ -288,25 +338,23 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
                       <span className="text-slate-200">{name}</span>
                       <div className="flex items-center gap-2">
                         <span className="text-emerald-400 font-mono text-xs">{formatTime(ft)}</span>
-                        {!isCompleted && (
-                          <button
-                            onClick={() => handleRemoveFromMatch(mp.playerId)}
-                            className="text-slate-600 hover:text-red-400 transition-colors"
-                            title="Fjern fra kamp"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        )}
+                        <button
+                          onClick={() => handleRemoveFromMatch(mp.playerId)}
+                          className="text-slate-600 hover:text-red-400 transition-colors"
+                          title="Fjern fra kamp"
+                        >
+                          <Trash2 size={13} />
+                        </button>
                       </div>
                     </div>
                   );
                 })}
               </div>
             </CardContent>
-          </Card>
+          </Card>}
 
-          {/* Substitution history */}
-          {match.substitutions.length > 0 && (
+          {/* Active: substitution history */}
+          {isActive && match.substitutions.length > 0 && (
             <Card>
               <CardContent className="pt-4">
                 <p className="text-sm font-medium text-slate-400 mb-2">Byttelog</p>
@@ -324,38 +372,6 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
             </Card>
           )}
         </div>
-      )}
-
-      {/* Summary on completion */}
-      {isCompleted && (
-        <Card>
-          <CardContent className="pt-4">
-            <p className="text-sm font-medium text-slate-400 mb-3">Spilletid per spiller</p>
-            <div className="space-y-2">
-              {[...match.matchPlayers]
-                .sort((a, b) => b.fieldSeconds - a.fieldSeconds)
-                .map((mp) => {
-                  const name = getPlayerName(mp.playerId);
-                  const total = mp.fieldSeconds;
-                  const pct = match.elapsedSeconds > 0 ? Math.round((total / match.elapsedSeconds) * 100) : 0;
-                  return (
-                    <div key={mp.playerId} className="flex items-center gap-2">
-                      <span className="text-sm text-slate-300 w-32 truncate">{name}</span>
-                      <div className="flex-1 bg-slate-700 rounded-full h-2">
-                        <div
-                          className="bg-emerald-500 h-2 rounded-full transition-all"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                      <span className="text-xs font-mono text-slate-400 w-12 text-right">
-                        {formatTime(total)}
-                      </span>
-                    </div>
-                  );
-                })}
-            </div>
-          </CardContent>
-        </Card>
       )}
     </div>
   );
