@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { Play, Square, ArrowLeft, Trash2, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,36 +15,53 @@ interface Props {
   onBack: () => void;
 }
 
-export function MatchView({ match, team, onUpdateMatch, onBack }: Props) {
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [animatingIds, setAnimatingIds] = useState<Set<string>>(new Set());
+function getLiveTime(match: Match): number {
+  if (match.status === 'active' && match.startedAt) {
+    return Math.floor((Date.now() - match.startedAt) / 1000);
+  }
+  return match.elapsedSeconds;
+}
 
+export function MatchView({ match, team, onUpdateMatch, onBack }: Props) {
+  const [animatingIds, setAnimatingIds] = useState<Set<string>>(new Set());
+  const [, forceUpdate] = useState(0);
+
+  // Tick every second to keep live timers updated — nothing written to store.
   useEffect(() => {
-    if (match.status !== 'active') {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      return;
-    }
-    intervalRef.current = setInterval(() => {
-      onUpdateMatch((m) => ({ ...m, elapsedSeconds: m.elapsedSeconds + 1 }));
-    }, 1000);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [match.status, onUpdateMatch]);
+    if (match.status !== 'active') return;
+    const id = setInterval(() => forceUpdate((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, [match.status]);
+
+  // All time-dependent UI reads from this value.
+  const currentTime = getLiveTime(match);
 
   const startMatch = useCallback(() => {
     onUpdateMatch((m) => ({ ...m, status: 'active', startedAt: Date.now() }));
   }, [onUpdateMatch]);
 
   const endMatch = useCallback(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    onUpdateMatch((m) => ({ ...m, status: 'completed' }));
-  }, [onUpdateMatch]);
+    const finalTime = getLiveTime(match);
+    onUpdateMatch((m) => {
+      // Freeze each player's accumulated time so the completion summary is correct.
+      const frozenPlayers = m.matchPlayers.map((mp): MatchPlayer => ({
+        ...mp,
+        fieldSeconds: mp.onField
+          ? mp.fieldSeconds + (finalTime - mp.lastEventTime)
+          : mp.fieldSeconds,
+        benchSeconds: !mp.onField
+          ? mp.benchSeconds + (finalTime - mp.lastEventTime)
+          : mp.benchSeconds,
+        lastEventTime: finalTime,
+      }));
+      return { ...m, status: 'completed', elapsedSeconds: finalTime, matchPlayers: frozenPlayers };
+    });
+  }, [match, onUpdateMatch]);
 
   const handleSubstitute = useCallback(
     (outId: string, inId: string) => {
-      const currentTime = match.elapsedSeconds;
-      const { matchPlayers, subQueue } = applySubstitution(match, outId, inId, currentTime);
+      const now = getLiveTime(match);
+      const { matchPlayers, subQueue } = applySubstitution(match, outId, inId, now);
       setAnimatingIds(new Set([outId, inId]));
       setTimeout(() => setAnimatingIds(new Set()), 800);
       onUpdateMatch((m) => ({
@@ -53,7 +70,7 @@ export function MatchView({ match, team, onUpdateMatch, onBack }: Props) {
         subQueue,
         substitutions: [
           ...m.substitutions,
-          { gameTime: currentTime, outPlayerId: outId, inPlayerId: inId },
+          { gameTime: now, outPlayerId: outId, inPlayerId: inId },
         ],
       }));
     },
@@ -69,40 +86,51 @@ export function MatchView({ match, team, onUpdateMatch, onBack }: Props) {
 
   const handleRemoveFromMatch = useCallback(
     (playerId: string) => {
+      const now = getLiveTime(match);
       onUpdateMatch((m) => {
         const filtered = m.matchPlayers.filter((mp) => mp.playerId !== playerId);
-        // Re-index lineupOrder sequentially
         const sorted = [...filtered].sort((a, b) => a.lineupOrder - b.lineupOrder);
         const reindexed = sorted.map((mp, i) => ({
           ...mp,
           lineupOrder: i,
           onField: i < m.settings.playersOnField,
         }));
-        const newSubQueue = buildSubQueue(reindexed, m.elapsedSeconds, m.settings.subInterval * 60, (m.settings.firstSubTime ?? 0) * 60);
+        const newSubQueue = buildSubQueue(
+          reindexed,
+          now,
+          m.settings.subInterval * 60,
+          (m.settings.firstSubTime ?? 0) * 60
+        );
         return { ...m, matchPlayers: reindexed, subQueue: newSubQueue };
       });
     },
-    [onUpdateMatch]
+    [match, onUpdateMatch]
   );
 
   const handleAddToMatch = useCallback(
     (player: Player) => {
+      const now = getLiveTime(match);
       onUpdateMatch((m) => {
         const maxOrder = m.matchPlayers.reduce((max, mp) => Math.max(max, mp.lineupOrder), -1);
         const newEntry: MatchPlayer = {
           playerId: player.id,
           fieldSeconds: 0,
           benchSeconds: 0,
-          lastEventTime: m.elapsedSeconds,
+          lastEventTime: now,
           onField: false,
           lineupOrder: maxOrder + 1,
         };
         const newPlayers = [...m.matchPlayers, newEntry];
-        const newSubQueue = buildSubQueue(newPlayers, m.elapsedSeconds, m.settings.subInterval * 60, (m.settings.firstSubTime ?? 0) * 60);
+        const newSubQueue = buildSubQueue(
+          newPlayers,
+          now,
+          m.settings.subInterval * 60,
+          (m.settings.firstSubTime ?? 0) * 60
+        );
         return { ...m, matchPlayers: newPlayers, subQueue: newSubQueue };
       });
     },
-    [onUpdateMatch]
+    [match, onUpdateMatch]
   );
 
   const isActive = match.status === 'active';
@@ -121,7 +149,7 @@ export function MatchView({ match, team, onUpdateMatch, onBack }: Props) {
   }
 
   function getTimeOnField(mp: typeof match.matchPlayers[0]) {
-    if (mp.onField && isActive) return mp.fieldSeconds + (match.elapsedSeconds - mp.lastEventTime);
+    if (mp.onField && isActive) return currentTime - mp.lastEventTime;
     return mp.fieldSeconds;
   }
 
@@ -142,7 +170,7 @@ export function MatchView({ match, team, onUpdateMatch, onBack }: Props) {
         </div>
         <div className="text-right">
           <div className={`text-3xl font-mono font-bold ${isActive ? 'text-emerald-400' : 'text-slate-500'}`}>
-            {formatTime(match.elapsedSeconds)}
+            {formatTime(currentTime)}
           </div>
           <div className="text-xs text-slate-500">
             {isCompleted ? 'Avsluttet' : isActive ? 'Pågår' : 'Ikke startet'}
@@ -176,13 +204,13 @@ export function MatchView({ match, team, onUpdateMatch, onBack }: Props) {
       {/* Active/Completed */}
       {(isActive || isCompleted) && (
         <div className="space-y-4">
-          <FootballPitch match={match} team={team} animatingPlayerIds={animatingIds} />
+          <FootballPitch match={match} team={team} animatingPlayerIds={animatingIds} currentTime={currentTime} />
 
           {isActive && (
             <SubstitutionPanel
               match={match}
               team={team}
-              currentTime={match.elapsedSeconds}
+              currentTime={currentTime}
               onSubstitute={handleSubstitute}
             />
           )}
@@ -194,7 +222,7 @@ export function MatchView({ match, team, onUpdateMatch, onBack }: Props) {
               <div className="space-y-1.5">
                 {benchPlayers.map((mp) => {
                   const name = getPlayerName(mp.playerId);
-                  const benchTime = mp.benchSeconds + (isActive ? match.elapsedSeconds - mp.lastEventTime : 0);
+                  const benchTime = mp.benchSeconds + (isActive ? currentTime - mp.lastEventTime : 0);
                   return (
                     <div
                       key={mp.playerId}

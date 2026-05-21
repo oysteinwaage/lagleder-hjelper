@@ -25,9 +25,9 @@ export function SubstitutionPanel({ match, team, currentTime, onSubstitute }: Pr
     return team.players.find((p) => p.id === id)?.name ?? '?';
   }
 
-  function getTimeOnField(mp: { playerId: string; onField: boolean; fieldSeconds: number; lastEventTime: number }) {
-    if (mp.onField) return mp.fieldSeconds + (currentTime - mp.lastEventTime);
-    return mp.fieldSeconds;
+  function getTimeOnField(mp: { playerId: string; onField: boolean; lastEventTime: number }) {
+    if (mp.onField) return currentTime - mp.lastEventTime;
+    return 0;
   }
 
   function getTimeOnBench(mp: { playerId: string; onField: boolean; benchSeconds: number; lastEventTime: number }) {

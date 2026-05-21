@@ -5,6 +5,7 @@ interface Props {
   match: Match;
   team: Team;
   animatingPlayerIds: Set<string>;
+  currentTime: number;
 }
 
 interface PlayerPos {
@@ -62,7 +63,7 @@ function getPositions(count: number): { x: number; y: number }[] {
   return rows.flat().slice(0, count);
 }
 
-export function FootballPitch({ match, team, animatingPlayerIds }: Props) {
+export function FootballPitch({ match, team, animatingPlayerIds, currentTime }: Props) {
   const fieldPlayers = match.matchPlayers
     .filter((mp) => mp.onField)
     .sort((a, b) => a.lineupOrder - b.lineupOrder);
@@ -80,7 +81,7 @@ export function FootballPitch({ match, team, animatingPlayerIds }: Props) {
       name: player?.name ?? '?',
       x: pos.x * W,
       y: pos.y * H,
-      spellSeconds: match.elapsedSeconds - mp.lastEventTime,
+      spellSeconds: currentTime - mp.lastEventTime,
     };
   });
 
