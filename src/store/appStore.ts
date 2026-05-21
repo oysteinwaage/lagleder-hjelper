@@ -104,6 +104,20 @@ export function useAppStore() {
     [setState]
   );
 
+  const updatePlayer = useCallback(
+    (playerId: string, name: string) => {
+      setState((s) => ({
+        ...s,
+        teams: s.teams.map((t) =>
+          t.id === s.activeTeamId
+            ? { ...t, players: t.players.map((p) => (p.id === playerId ? { ...p, name } : p)) }
+            : t
+        ),
+      }));
+    },
+    [setState]
+  );
+
   const updateDefaultSettings = useCallback(
     (settings: Partial<MatchSettings>) => {
       setState((s) => ({ ...s, defaultSettings: { ...s.defaultSettings, ...settings } }));
@@ -189,6 +203,7 @@ export function useAppStore() {
     updateTeam,
     addPlayer,
     removePlayer,
+    updatePlayer,
     updateDefaultSettings,
     createMatch,
     updateMatch,

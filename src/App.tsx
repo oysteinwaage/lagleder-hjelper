@@ -20,6 +20,7 @@ export default function App() {
     updateTeam,
     addPlayer,
     removePlayer,
+    updatePlayer,
     updateDefaultSettings,
     createMatch,
     updateMatch,
@@ -238,6 +239,7 @@ export default function App() {
                 onAddPlayer={addPlayer}
                 onRemovePlayer={removePlayer}
                 onUpdateTeam={updateTeam}
+                onUpdatePlayer={updatePlayer}
               />
             )}
           </>
