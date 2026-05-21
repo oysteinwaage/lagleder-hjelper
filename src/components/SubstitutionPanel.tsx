@@ -66,8 +66,6 @@ export function SubstitutionPanel({ match, team, currentTime, onSubstitute }: Pr
         {queue.map((sub) => {
           const countdown = getSubCountdown(sub);
           const isDue = countdown === 0;
-          const outMp = match.matchPlayers.find((mp) => mp.playerId === sub.outId);
-          const inMp = match.matchPlayers.find((mp) => mp.playerId === sub.inId);
           return (
             <div
               key={`${sub.outId}-${sub.inId}`}
@@ -87,12 +85,6 @@ export function SubstitutionPanel({ match, team, currentTime, onSubstitute }: Pr
                     ↑ {getPlayerName(sub.inId)}
                   </span>
                 </div>
-                {outMp && inMp && (
-                  <div className="text-xs text-slate-500 mt-0.5">
-                    På banen: {formatTime(Math.floor(getTimeOnField(outMp)))} ·
-                    På benken: {formatTime(Math.floor(getTimeOnBench(inMp)))}
-                  </div>
-                )}
               </div>
               <div className="flex flex-col items-end gap-1.5">
                 {countdown > 0 && (
