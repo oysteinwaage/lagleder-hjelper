@@ -16,6 +16,12 @@ export function SubstitutionPanel({ match, team, currentTime, onSubstitute }: Pr
   const [customOut, setCustomOut] = useState<string>('');
   const [customIn, setCustomIn] = useState<string>('');
   const [showCustom, setShowCustom] = useState(false);
+  const [flashKey, setFlashKey] = useState(0);
+
+  function triggerSub(outId: string, inId: string) {
+    onSubstitute(outId, inId);
+    setFlashKey((k) => k + 1);
+  }
 
   // Calculate when the next subs are due
   const fieldPlayers = match.matchPlayers.filter((mp) => mp.onField);
@@ -44,14 +50,21 @@ export function SubstitutionPanel({ match, team, currentTime, onSubstitute }: Pr
 
   function handleCustomSub() {
     if (!customOut || !customIn) return;
-    onSubstitute(customOut, customIn);
+    triggerSub(customOut, customIn);
     setCustomOut('');
     setCustomIn('');
     setShowCustom(false);
   }
 
   return (
-    <Card>
+    <Card className="relative overflow-hidden">
+      {flashKey > 0 && (
+        <div
+          key={flashKey}
+          className="sub-flash-overlay absolute inset-0 pointer-events-none rounded-xl"
+          style={{ background: 'radial-gradient(ellipse at center, rgba(34,197,94,0.28) 0%, rgba(34,197,94,0) 70%)' }}
+        />
+      )}
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ArrowLeftRight className="text-emerald-400" size={20} />
@@ -99,7 +112,7 @@ export function SubstitutionPanel({ match, team, currentTime, onSubstitute }: Pr
                 <Button
                   size="sm"
                   variant={isDue ? 'success' : 'secondary'}
-                  onClick={() => onSubstitute(sub.outId, sub.inId)}
+                  onClick={() => triggerSub(sub.outId, sub.inId)}
                 >
                   Bytt
                 </Button>

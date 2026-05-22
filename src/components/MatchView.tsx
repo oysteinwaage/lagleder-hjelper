@@ -24,7 +24,8 @@ function getLiveTime(match: Match): number {
 }
 
 export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack }: Props) {
-  const [animatingIds, setAnimatingIds] = useState<Set<string>>(new Set());
+  const [enterFieldId, setEnterFieldId] = useState<string | null>(null);
+  const [enterBenchId, setEnterBenchId] = useState<string | null>(null);
   const [, forceUpdate] = useState(0);
 
   // Tick every second to keep live timers updated — nothing written to store.
@@ -60,8 +61,9 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
     (outId: string, inId: string) => {
       const now = getLiveTime(match);
       const { matchPlayers, subQueue } = applySubstitution(match, outId, inId, now);
-      setAnimatingIds(new Set([outId, inId]));
-      setTimeout(() => setAnimatingIds(new Set()), 800);
+      setEnterFieldId(inId);
+      setEnterBenchId(outId);
+      setTimeout(() => { setEnterFieldId(null); setEnterBenchId(null); }, 800);
       onUpdateMatch((m) => ({
         ...m,
         matchPlayers,
@@ -202,7 +204,7 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
       {/* Active/Completed */}
       {(isActive || isCompleted) && (
         <div className="space-y-4">
-          {isActive && <FootballPitch match={match} team={team} animatingPlayerIds={animatingIds} currentTime={currentTime} />}
+          {isActive && <FootballPitch match={match} team={team} enterFieldId={enterFieldId} enterBenchId={enterBenchId} currentTime={currentTime} />}
 
           {/* Completed: summary first, then substitution history */}
           {isCompleted && (
@@ -274,7 +276,7 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
                   return (
                     <div
                       key={mp.playerId}
-                      className={`flex items-center justify-between px-3 py-2 rounded-lg bg-slate-700/50 text-sm ${animatingIds.has(mp.playerId) ? 'player-swap' : ''}`}
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg bg-slate-700/50 text-sm ${mp.playerId === enterBenchId ? 'player-enter-bench' : ''}`}
                     >
                       <span className="text-slate-200">{name}</span>
                       <div className="flex items-center gap-2">
@@ -333,7 +335,7 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
                   return (
                     <div
                       key={mp.playerId}
-                      className={`flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-900/20 text-sm ${animatingIds.has(mp.playerId) ? 'player-swap' : ''}`}
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-900/20 text-sm ${mp.playerId === enterFieldId ? 'player-enter-field' : ''}`}
                     >
                       <span className="text-slate-200">{name}</span>
                       <div className="flex items-center gap-2">

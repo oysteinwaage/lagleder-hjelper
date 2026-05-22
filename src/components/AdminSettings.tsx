@@ -12,10 +12,27 @@ interface Props {
 
 export function AdminSettings({ settings, onSave }: Props) {
   const [local, setLocal] = useState(settings);
+  const [inputValues, setInputValues] = useState<Record<keyof MatchSettings, string>>(
+    () => Object.fromEntries(
+      (Object.keys(settings) as (keyof MatchSettings)[]).map((k) => [k, String(settings[k])])
+    ) as Record<keyof MatchSettings, string>
+  );
   const [saved, setSaved] = useState(false);
 
-  function handle(key: keyof MatchSettings, val: string) {
-    setLocal((s) => ({ ...s, [key]: parseInt(val) || 0 }));
+  function handleChange(key: keyof MatchSettings, val: string) {
+    setInputValues((s) => ({ ...s, [key]: val }));
+  }
+
+  function handleBlur(key: keyof MatchSettings, min: number, max: number) {
+    const raw = inputValues[key];
+    const parsed = parseInt(raw);
+    if (raw === '' || isNaN(parsed)) {
+      setInputValues((s) => ({ ...s, [key]: String(local[key]) }));
+    } else {
+      const clamped = Math.min(Math.max(parsed, min), max);
+      setLocal((s) => ({ ...s, [key]: clamped }));
+      setInputValues((s) => ({ ...s, [key]: String(clamped) }));
+    }
   }
 
   function save() {
@@ -45,16 +62,17 @@ export function AdminSettings({ settings, onSave }: Props) {
           {fields.map(({ key, label, unit, min, max }) => (
             <div key={key} className="flex items-center gap-3">
               <label className="flex-1 text-sm text-slate-300">{label}</label>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 w-28 shrink-0">
                 <Input
                   type="number"
-                  value={local[key]}
+                  value={inputValues[key]}
                   min={min}
                   max={max}
-                  onChange={(e) => handle(key, e.target.value)}
+                  onChange={(e) => handleChange(key, e.target.value)}
+                  onBlur={() => handleBlur(key, min, max)}
                   className="w-20 text-center"
                 />
-                {unit && <span className="text-slate-500 text-sm">{unit}</span>}
+                <span className="text-slate-500 text-sm w-7">{unit ?? ''}</span>
               </div>
             </div>
           ))}
