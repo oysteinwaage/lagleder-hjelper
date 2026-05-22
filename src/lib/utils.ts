@@ -87,11 +87,17 @@ export function applySubstitution(
 ): { matchPlayers: MatchPlayer[]; subQueue: { outId: string; inId: string; dueTime: number }[] } {
   const subIntervalSec = match.settings.subInterval * 60;
 
+  const outPlayer = match.matchPlayers.find((mp) => mp.playerId === outPlayerId);
+  const inPlayer = match.matchPlayers.find((mp) => mp.playerId === inPlayerId);
+  const outOrder = outPlayer?.lineupOrder ?? 0;
+  const inOrder = inPlayer?.lineupOrder ?? 0;
+
   const updated = match.matchPlayers.map((mp): MatchPlayer => {
     if (mp.playerId === outPlayerId) {
       return {
         ...mp,
         onField: false,
+        lineupOrder: inOrder,
         fieldSeconds: mp.fieldSeconds + (currentTime - mp.lastEventTime),
         lastEventTime: currentTime,
       };
@@ -100,6 +106,7 @@ export function applySubstitution(
       return {
         ...mp,
         onField: true,
+        lineupOrder: outOrder,
         benchSeconds: mp.benchSeconds + (currentTime - mp.lastEventTime),
         lastEventTime: currentTime,
       };

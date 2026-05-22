@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { Play, Square, ArrowLeft, Trash2, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,6 +26,7 @@ function getLiveTime(match: Match): number {
 export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack }: Props) {
   const [enterFieldId, setEnterFieldId] = useState<string | null>(null);
   const [enterBenchId, setEnterBenchId] = useState<string | null>(null);
+  const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, forceUpdate] = useState(0);
 
   // Tick every second to keep live timers updated — nothing written to store.
@@ -63,7 +64,8 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
       const { matchPlayers, subQueue } = applySubstitution(match, outId, inId, now);
       setEnterFieldId(inId);
       setEnterBenchId(outId);
-      setTimeout(() => { setEnterFieldId(null); setEnterBenchId(null); }, 800);
+      if (animTimerRef.current) clearTimeout(animTimerRef.current);
+      animTimerRef.current = setTimeout(() => { setEnterFieldId(null); setEnterBenchId(null); }, 800);
       onUpdateMatch((m) => ({
         ...m,
         matchPlayers,
