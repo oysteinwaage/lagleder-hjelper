@@ -27,7 +27,7 @@ function matchSortKey(m: Match) {
   return m.date + (m.time ? 'T' + m.time : 'T00:00');
 }
 
-function applySettingsToPendingMatch(match: Match, settings: MatchSettings): Match {
+function applySettingsToPendingMatch(match: Match, settings: MatchSettings, preset?: PresetKey): Match {
   if (match.status !== 'pending') return match;
   const updatedPlayers = match.matchPlayers.map((mp, i) => ({
     ...mp,
@@ -39,7 +39,13 @@ function applySettingsToPendingMatch(match: Match, settings: MatchSettings): Mat
     settings.subInterval * 60,
     (settings.firstSubTime ?? 0) * 60
   );
-  return { ...match, settings: { ...settings }, matchPlayers: updatedPlayers, subQueue };
+  return {
+    ...match,
+    settings: { ...settings },
+    matchPlayers: updatedPlayers,
+    subQueue,
+    ...(preset !== undefined ? { preset } : {}),
+  };
 }
 
 const STORAGE_KEY = 'lagleder_app_v1';
@@ -166,7 +172,7 @@ export function useAppStore() {
           ...s,
           defaultSettings: merged,
           selectedPreset: preset !== undefined ? preset : s.selectedPreset,
-          matches: s.matches.map((m) => applySettingsToPendingMatch(m, merged)),
+          matches: s.matches.map((m) => applySettingsToPendingMatch(m, merged, preset)),
         };
       });
     },
