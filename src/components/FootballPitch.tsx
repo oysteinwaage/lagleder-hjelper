@@ -7,6 +7,7 @@ interface Props {
   enterFieldId: string | null;
   enterBenchId: string | null;
   currentTime: number;
+  keeperId?: string;
 }
 
 function getPositions(count: number): { x: number; y: number }[] {
@@ -56,13 +57,41 @@ function getPositions(count: number): { x: number; y: number }[] {
   return rows.flat().slice(0, count);
 }
 
-const W = 320;
-const H_FIELD = 200;
-const BENCH_GAP = 6;
-const BENCH_PLAYER_CY = H_FIELD + BENCH_GAP + 26;
-const TOTAL_H = H_FIELD + BENCH_GAP + 60;
+// Playing field dimensions — bench now lives on the right so field is taller
+const W = 248;
+const H_FIELD = 266;
+const BENCH_W = 72;
+const BENCH_CX = W + BENCH_W / 2;
+const TOTAL_W = W + BENCH_W;
 
-export function FootballPitch({ match, team, enterFieldId, enterBenchId, currentTime }: Props) {
+// Positions calculated so every player label fits within H_FIELD with 2px gaps between players.
+// Each player element spans 62px (head-top at center−24, label-bottom at center+38).
+// Working up from keeper: 226 → 162 → 98 → 34 (spacing 64px = 62 + 2px gap each).
+const KEEPER_POS = { x: 0.5, y: 226 / H_FIELD };
+
+// Outfield positions when a keeper holds the bottom goal area — 1-2-1 for 4 players
+function getOutfieldPositions(count: number): { x: number; y: number }[] {
+  if (count === 1) return [{ x: 0.5, y: 100 / H_FIELD }];
+  if (count === 2) return [
+    { x: 0.5, y: 60 / H_FIELD },
+    { x: 0.5, y: 150 / H_FIELD },
+  ];
+  if (count === 3) return [
+    { x: 0.5,  y: 42 / H_FIELD },
+    { x: 0.25, y: 120 / H_FIELD },
+    { x: 0.75, y: 120 / H_FIELD },
+  ];
+  // 1-2-1: spiss, venstre ving, høyre ving, back
+  if (count === 4) return [
+    { x: 0.5,  y: 34 / H_FIELD  },  // spiss
+    { x: 0.22, y: 98 / H_FIELD  },  // venstre ving
+    { x: 0.78, y: 98 / H_FIELD  },  // høyre ving
+    { x: 0.5,  y: 162 / H_FIELD },  // back
+  ];
+  return getPositions(count);
+}
+
+export function FootballPitch({ match, team, enterFieldId, enterBenchId, currentTime, keeperId }: Props) {
   const fieldPlayers = match.matchPlayers
     .filter((mp) => mp.onField)
     .sort((a, b) => a.lineupOrder - b.lineupOrder);
@@ -71,31 +100,41 @@ export function FootballPitch({ match, team, enterFieldId, enterBenchId, current
     .filter((mp) => !mp.onField)
     .sort((a, b) => a.lineupOrder - b.lineupOrder);
 
-  const fieldPositions = getPositions(fieldPlayers.length);
+  // Separate keeper from outfield players when keeperId is set
+  const keeperMp = keeperId ? fieldPlayers.find((mp) => mp.playerId === keeperId) : undefined;
+  const outfieldPlayers = keeperMp
+    ? fieldPlayers.filter((mp) => mp.playerId !== keeperId)
+    : fieldPlayers;
+  const outfieldPositions = keeperMp
+    ? getOutfieldPositions(outfieldPlayers.length)
+    : getPositions(outfieldPlayers.length);
 
   const N = benchPlayers.length;
-  const benchXs = benchPlayers.map((_, i) => (W * (i + 1)) / (N + 1));
+  const BENCH_START_Y = 28;
+  const BENCH_AVAIL_H = H_FIELD - BENCH_START_Y - 10;
+  function benchPlayerY(i: number) {
+    return N > 0 ? BENCH_START_Y + (i + 1) * BENCH_AVAIL_H / (N + 1) : H_FIELD / 2;
+  }
 
   function getPlayerName(id: string) {
     return team.players.find((p) => p.id === id)?.name ?? '?';
   }
 
-  // Positions of entering players for swap animation line
-  let swapFx = 0, swapFy = 0, swapBx = 0, swapBy = BENCH_PLAYER_CY;
+  // Swap animation — now goes from field (left) to bench panel (right)
+  let swapFx = 0, swapFy = 0, swapBx = BENCH_CX, swapBy = 0;
   let showSwapLine = false;
   if (enterFieldId && enterBenchId) {
-    const fi = fieldPlayers.findIndex((mp) => mp.playerId === enterFieldId);
+    const fi = outfieldPlayers.findIndex((mp) => mp.playerId === enterFieldId);
     const bi = benchPlayers.findIndex((mp) => mp.playerId === enterBenchId);
     if (fi >= 0 && bi >= 0) {
-      const fp = fieldPositions[fi];
+      const fp = outfieldPositions[fi];
       swapFx = fp.x * W;
       swapFy = fp.y * H_FIELD;
-      swapBx = benchXs[bi];
+      swapBy = benchPlayerY(bi);
       showSwapLine = true;
     }
   }
 
-  // Perpendicular offset for double swap arrows
   const dx = swapBx - swapFx;
   const dy = swapBy - swapFy;
   const lineLen = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -105,9 +144,9 @@ export function FootballPitch({ match, team, enterFieldId, enterBenchId, current
   return (
     <div className="flex justify-center">
       <svg
-        viewBox={`0 0 ${W} ${TOTAL_H}`}
-        width={W}
-        height={TOTAL_H}
+        viewBox={`0 0 ${TOTAL_W} ${H_FIELD}`}
+        width={TOTAL_W}
+        height={H_FIELD}
         className="rounded-xl overflow-hidden max-w-full"
       >
         <defs>
@@ -140,7 +179,6 @@ export function FootballPitch({ match, team, enterFieldId, enterBenchId, current
         {/* Swap animation lines */}
         {showSwapLine && (
           <>
-            {/* Green: bench → field (incoming) */}
             <line
               x1={swapBx + px} y1={swapBy + py}
               x2={swapFx + px} y2={swapFy + py}
@@ -148,7 +186,6 @@ export function FootballPitch({ match, team, enterFieldId, enterBenchId, current
               markerEnd="url(#arrowGreen)"
               className="svg-swap-line"
             />
-            {/* Red: field → bench (outgoing) */}
             <line
               x1={swapFx - px} y1={swapFy - py}
               x2={swapBx - px} y2={swapBy - py}
@@ -159,9 +196,9 @@ export function FootballPitch({ match, team, enterFieldId, enterBenchId, current
           </>
         )}
 
-        {/* Field players */}
-        {fieldPlayers.map((mp, i) => {
-          const pos = fieldPositions[i];
+        {/* Outfield players */}
+        {outfieldPlayers.map((mp, i) => {
+          const pos = outfieldPositions[i];
           const x = pos.x * W;
           const y = pos.y * H_FIELD;
           const isEntering = mp.playerId === enterFieldId;
@@ -195,36 +232,61 @@ export function FootballPitch({ match, team, enterFieldId, enterBenchId, current
           );
         })}
 
-        {/* Bench area */}
-        <rect x={0} y={H_FIELD} width={W} height={TOTAL_H - H_FIELD} fill="rgba(0,0,0,0.32)" />
-        <line x1={0} y1={H_FIELD} x2={W} y2={H_FIELD} stroke="rgba(255,255,255,0.12)" strokeWidth={1} />
-        <text x={W / 2} y={H_FIELD + 11} textAnchor="middle" fill="rgba(255,255,255,0.25)" fontSize={8} fontFamily="system-ui, sans-serif" letterSpacing="2">
+        {/* Keeper — fixed at bottom goal area */}
+        {keeperMp && (() => {
+          const x = KEEPER_POS.x * W;
+          const y = KEEPER_POS.y * H_FIELD;
+          const name = getPlayerName(keeperMp.playerId);
+          const displayName = name.length > 10 ? name.slice(0, 9) + '…' : name;
+          const spellSeconds = currentTime - keeperMp.lastEventTime;
+          return (
+            <g key={keeperMp.playerId} transform={`translate(${x}, ${y})`}>
+              <ellipse cx={0} cy={14} rx={11} ry={4} fill="rgba(0,0,0,0.25)" />
+              <circle r={12} fill="#d97706" stroke="white" strokeWidth={1.5} />
+              <line x1={-6} y1={-4} x2={-6} y2={8} stroke="rgba(255,255,255,0.4)" strokeWidth={1.5} />
+              <line x1={6} y1={-4} x2={6} y2={8} stroke="rgba(255,255,255,0.4)" strokeWidth={1.5} />
+              <circle cx={0} cy={-16} r={8} fill="#f5c89a" stroke="white" strokeWidth={1.5} />
+              <rect x={-26} y={16} width={52} height={22} rx={3} fill="rgba(0,0,0,0.70)" />
+              <text x={0} y={26} textAnchor="middle" fill="white" fontSize={8} fontFamily="system-ui, sans-serif" fontWeight="600">
+                {displayName}
+              </text>
+              <text x={0} y={35} textAnchor="middle" fill="#fbbf24" fontSize={8} fontFamily="ui-monospace, monospace" fontWeight="500">
+                {formatTime(Math.max(0, Math.floor(spellSeconds)))}
+              </text>
+            </g>
+          );
+        })()}
+
+        {/* Bench panel */}
+        <rect x={W} y={0} width={BENCH_W} height={H_FIELD} fill="rgba(0,0,0,0.32)" />
+        <line x1={W} y1={0} x2={W} y2={H_FIELD} stroke="rgba(255,255,255,0.12)" strokeWidth={1} />
+        <text x={BENCH_CX} y={12} textAnchor="middle" fill="rgba(255,255,255,0.25)" fontSize={7} fontFamily="system-ui, sans-serif" letterSpacing="1">
           BENKEN
         </text>
 
         {/* Bench players */}
         {benchPlayers.map((mp, i) => {
-          const x = benchXs[i];
-          const y = BENCH_PLAYER_CY;
+          const x = BENCH_CX;
+          const y = benchPlayerY(i);
           const isJustBenched = mp.playerId === enterBenchId;
           const name = getPlayerName(mp.playerId);
-          const displayName = name.length > 9 ? name.slice(0, 8) + '…' : name;
+          const displayName = name.length > 8 ? name.slice(0, 7) + '…' : name;
           const benchTime = mp.benchSeconds + (currentTime - mp.lastEventTime);
 
           return (
             <g key={mp.playerId} transform={`translate(${x}, ${y})`}>
               {isJustBenched && (
-                <circle r={11} fill="none" stroke="rgba(239,68,68,0.85)" strokeWidth={2} className="svg-red-ring" />
+                <circle r={10} fill="none" stroke="rgba(239,68,68,0.85)" strokeWidth={2} className="svg-red-ring" />
               )}
               <g className={isJustBenched ? 'svg-bench-pop' : undefined}>
                 <ellipse cx={0} cy={8} rx={6} ry={2} fill="rgba(0,0,0,0.25)" />
                 <circle r={7} fill={isJustBenched ? '#991b1b' : '#334155'} stroke="rgba(255,255,255,0.65)" strokeWidth={1.5} />
                 <circle cx={0} cy={-10} r={5} fill="#f5c89a" stroke="rgba(255,255,255,0.65)" strokeWidth={1.5} />
-                <rect x={-20} y={10} width={40} height={20} rx={2} fill="rgba(0,0,0,0.72)" />
-                <text x={0} y={19} textAnchor="middle" fill="rgba(255,255,255,0.9)" fontSize={8} fontFamily="system-ui, sans-serif" fontWeight="600">
+                <rect x={-28} y={10} width={56} height={18} rx={2} fill="rgba(0,0,0,0.72)" />
+                <text x={0} y={19} textAnchor="middle" fill="rgba(255,255,255,0.9)" fontSize={7} fontFamily="system-ui, sans-serif" fontWeight="600">
                   {displayName}
                 </text>
-                <text x={0} y={27} textAnchor="middle" fill="#94a3b8" fontSize={8} fontFamily="ui-monospace, monospace" fontWeight="500">
+                <text x={0} y={27} textAnchor="middle" fill="#94a3b8" fontSize={7} fontFamily="ui-monospace, monospace" fontWeight="500">
                   {formatTime(Math.max(0, Math.floor(benchTime)))}
                 </text>
               </g>
@@ -234,9 +296,14 @@ export function FootballPitch({ match, team, enterFieldId, enterBenchId, current
 
         {/* Empty bench message */}
         {benchPlayers.length === 0 && (
-          <text x={W / 2} y={BENCH_PLAYER_CY} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize={9} fontFamily="system-ui, sans-serif">
-            Ingen på benken
-          </text>
+          <>
+            <text x={BENCH_CX} y={H_FIELD / 2 - 5} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize={8} fontFamily="system-ui, sans-serif">
+              Ingen
+            </text>
+            <text x={BENCH_CX} y={H_FIELD / 2 + 8} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize={8} fontFamily="system-ui, sans-serif">
+              på benken
+            </text>
+          </>
         )}
       </svg>
     </div>

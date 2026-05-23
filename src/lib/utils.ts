@@ -34,9 +34,10 @@ export function buildSubQueue(
   matchPlayers: MatchPlayer[],
   currentTime: number,
   subIntervalSec: number,
-  firstSubTimeSec = 0
+  firstSubTimeSec = 0,
+  keeperId?: string
 ): { outId: string; inId: string; dueTime: number }[] {
-  const fieldPlayers = [...matchPlayers.filter((p) => p.onField)]
+  const fieldPlayers = [...matchPlayers.filter((p) => p.onField && p.playerId !== keeperId)]
     .sort((a, b) => a.lastEventTime - b.lastEventTime);
   const benchPlayers = [...matchPlayers.filter((p) => !p.onField)]
     .sort((a, b) => a.lastEventTime - b.lastEventTime);
@@ -137,8 +138,9 @@ export function applySubstitution(
 
   // Field players not already in validQueue as outId, sorted by ascending lastEventTime (longest on field first).
   const scheduledOutIds = new Set(validQueue.map((e) => e.outId));
-  const candidates = [...updated.filter((mp) => mp.onField && !scheduledOutIds.has(mp.playerId))]
-    .sort((a, b) => a.lastEventTime - b.lastEventTime);
+  const candidates = [...updated.filter(
+    (mp) => mp.onField && !scheduledOutIds.has(mp.playerId) && mp.playerId !== match.keeperId
+  )].sort((a, b) => a.lastEventTime - b.lastEventTime);
 
   const pairCount = Math.min(prioritizedBench.length, candidates.length);
   for (let i = 0; i < pairCount; i++) {
@@ -158,4 +160,78 @@ export function applySubstitution(
   }
 
   return { matchPlayers: updated, subQueue: newQueue.sort((a, b) => a.dueTime - b.dueTime) };
+}
+
+/** Swap the keeper role from the current keeper to newKeeperId.
+ *  The old keeper takes the incoming player's position (field or bench).
+ *  Any sub-queue entry referencing the incoming player is transferred to the old keeper. */
+export function applyKeeperChange(
+  match: Match,
+  newKeeperId: string,
+  currentTime: number
+): { matchPlayers: MatchPlayer[]; subQueue: Match['subQueue']; keeperId: string; keeperSince: number } {
+  const oldKeeperId = match.keeperId;
+  const subIntervalSec = match.settings.subInterval * 60;
+  const oldKeeperEntry = match.matchPlayers.find((mp) => mp.playerId === oldKeeperId);
+  const newKeeperEntry = match.matchPlayers.find((mp) => mp.playerId === newKeeperId);
+  if (!oldKeeperEntry || !newKeeperEntry) {
+    return { matchPlayers: match.matchPlayers, subQueue: match.subQueue, keeperId: newKeeperId, keeperSince: currentTime };
+  }
+
+  const newKeeperWasOnBench = !newKeeperEntry.onField;
+
+  const updated = match.matchPlayers.map((mp): MatchPlayer => {
+    if (mp.playerId === oldKeeperId) {
+      return {
+        ...mp,
+        onField: !newKeeperWasOnBench,
+        lineupOrder: newKeeperEntry.lineupOrder,
+        keeperSeconds: (mp.keeperSeconds ?? 0) + (currentTime - (match.keeperSince ?? 0)),
+        fieldSeconds: mp.fieldSeconds,
+        lastEventTime: currentTime,
+      };
+    }
+    if (mp.playerId === newKeeperId) {
+      return {
+        ...mp,
+        onField: true,
+        lineupOrder: oldKeeperEntry.lineupOrder,
+        benchSeconds: newKeeperWasOnBench
+          ? mp.benchSeconds + (currentTime - mp.lastEventTime)
+          : mp.benchSeconds,
+        fieldSeconds: !newKeeperWasOnBench
+          ? mp.fieldSeconds + (currentTime - mp.lastEventTime)
+          : mp.fieldSeconds,
+        lastEventTime: currentTime,
+      };
+    }
+    return mp;
+  });
+
+  // Transfer any sub-queue entries from newKeeperId to oldKeeperId
+  let newQueue = match.subQueue
+    .map((e) => ({
+      ...e,
+      outId: e.outId === newKeeperId ? oldKeeperId : e.outId,
+      inId: e.inId === newKeeperId ? oldKeeperId : e.inId,
+    }))
+    .filter((e) => e.outId !== newKeeperId && e.inId !== newKeeperId);
+
+  // If old keeper went to bench and has no queue entry, schedule them to come back on
+  if (newKeeperWasOnBench && !newQueue.some((e) => e.inId === oldKeeperId)) {
+    const plannedOutIds = new Set(newQueue.map((e) => e.outId));
+    const candidate = updated
+      .filter((mp) => mp.onField && mp.playerId !== newKeeperId && !plannedOutIds.has(mp.playerId))
+      .sort((a, b) => a.lastEventTime - b.lastEventTime)[0];
+    if (candidate) {
+      newQueue.push({ outId: candidate.playerId, inId: oldKeeperId, dueTime: currentTime + subIntervalSec });
+    }
+  }
+
+  return {
+    matchPlayers: updated,
+    subQueue: newQueue.sort((a, b) => a.dueTime - b.dueTime),
+    keeperId: newKeeperId,
+    keeperSince: currentTime,
+  };
 }

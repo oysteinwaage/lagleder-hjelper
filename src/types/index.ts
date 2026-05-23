@@ -21,12 +21,13 @@ export interface MatchPlayer {
   playerId: string;
   fieldSeconds: number;
   benchSeconds: number;
+  keeperSeconds?: number;
   lastEventTime: number;
   onField: boolean;
   lineupOrder: number;
 }
 
-export type MatchStatus = 'pending' | 'active' | 'completed';
+export type MatchStatus = 'pending' | 'active' | 'halftime' | 'completed';
 
 export interface SubstitutionEvent {
   gameTime: number;
@@ -46,6 +47,10 @@ export interface Match {
   matchPlayers: MatchPlayer[];
   elapsedSeconds: number;
   startedAt?: number;
+  currentHalf?: number;
+  keeperId?: string;
+  keeperSince?: number;
+  preset?: PresetKey;
   substitutions: SubstitutionEvent[];
   subQueue: { outId: string; inId: string; dueTime: number }[];
 }

@@ -183,6 +183,7 @@ export function useAppStore() {
           playerId: p.id,
           fieldSeconds: 0,
           benchSeconds: 0,
+          keeperSeconds: 0,
           lastEventTime: 0,
           onField: i < settings.playersOnField,
           lineupOrder: i,
@@ -201,6 +202,7 @@ export function useAppStore() {
           elapsedSeconds: 0,
           substitutions: [],
           subQueue,
+          preset: s.selectedPreset,
         };
         return { ...s, matches: [...s.matches, match] };
       });
@@ -217,7 +219,7 @@ export function useAppStore() {
         const completedMatch: Match = {
           ...match,
           status: 'completed',
-          elapsedSeconds: finalTime,
+          elapsedSeconds: match.elapsedSeconds + finalTime,
           matchPlayers: frozenPlayers,
         };
 

@@ -9,10 +9,11 @@ interface Props {
   match: Match;
   team: Team;
   currentTime: number;
+  keeperId?: string;
   onSubstitute: (outId: string, inId: string) => void;
 }
 
-export function SubstitutionPanel({ match, team, currentTime, onSubstitute }: Props) {
+export function SubstitutionPanel({ match, team, currentTime, keeperId, onSubstitute }: Props) {
   const [customOut, setCustomOut] = useState<string>('');
   const [customIn, setCustomIn] = useState<string>('');
   const [showCustom, setShowCustom] = useState(false);
@@ -24,7 +25,7 @@ export function SubstitutionPanel({ match, team, currentTime, onSubstitute }: Pr
   }
 
   // Calculate when the next subs are due
-  const fieldPlayers = match.matchPlayers.filter((mp) => mp.onField);
+  const fieldPlayers = match.matchPlayers.filter((mp) => mp.onField && mp.playerId !== keeperId);
   const benchPlayers = match.matchPlayers.filter((mp) => !mp.onField);
 
   function getPlayerName(id: string) {

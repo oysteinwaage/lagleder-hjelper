@@ -14,24 +14,29 @@ import {
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
+  type UseSortableArguments,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2, UserPlus } from 'lucide-react';
+import { GripVertical, Trash2, UserPlus, Shield } from 'lucide-react';
 import type { Match, Team, Player } from '@/types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { buildSubQueue } from '@/lib/utils';
+import { buildSubQueue, formatTime } from '@/lib/utils';
 
 interface SortableItemProps {
   id: string;
   index: number;
   name: string;
   isStarter: boolean;
+  isKeeper?: boolean;
+  extraInfo?: string;
+  keeperRequired?: boolean;
   onRemove: (id: string) => void;
+  onToggleKeeper?: (id: string) => void;
 }
 
-function SortableItem({ id, index, name, isStarter, onRemove }: SortableItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+function SortableItem({ id, index, name, isStarter, isKeeper, extraInfo, keeperRequired, onRemove, onToggleKeeper }: SortableItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id } as unknown as UseSortableArguments);
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -44,7 +49,9 @@ function SortableItem({ id, index, name, isStarter, onRemove }: SortableItemProp
       ref={setNodeRef}
       style={style}
       className={`flex items-center gap-3 rounded-lg px-3 py-2.5 border transition-colors cursor-grab active:cursor-grabbing touch-none select-none ${
-        isStarter
+        isKeeper
+          ? 'bg-amber-900/30 border-amber-700/50'
+          : isStarter
           ? 'bg-emerald-900/30 border-emerald-700/50'
           : 'bg-slate-700/50 border-slate-700/30'
       }`}
@@ -55,10 +62,23 @@ function SortableItem({ id, index, name, isStarter, onRemove }: SortableItemProp
       <span className="text-slate-500 text-sm w-5 text-right shrink-0">{index + 1}.</span>
 
       <span className="flex-1 text-slate-100 truncate">{name}</span>
-      {isStarter ? (
+      {extraInfo && <span className="text-xs text-slate-400 font-mono shrink-0">{extraInfo}</span>}
+      {isKeeper ? (
+        <Badge variant="warning">Keeper</Badge>
+      ) : isStarter ? (
         <Badge variant="success">Starter</Badge>
       ) : (
         <Badge variant="secondary">Reserve</Badge>
+      )}
+      {onToggleKeeper && (
+        <button
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => onToggleKeeper(id)}
+          className={`transition-colors shrink-0 ${isKeeper ? 'text-amber-400 hover:text-amber-300' : keeperRequired ? 'text-amber-500 animate-pulse hover:text-amber-300' : 'text-slate-600 hover:text-amber-400'}`}
+          title={isKeeper ? 'Fjern som keeper' : 'Sett som keeper'}
+        >
+          <Shield size={14} />
+        </button>
       )}
       <button
         onPointerDown={(e) => e.stopPropagation()}
@@ -75,12 +95,16 @@ function SortableItem({ id, index, name, isStarter, onRemove }: SortableItemProp
 interface Props {
   match: Match;
   team: Team;
+  playerTimes?: Record<string, number>;
+  keeperId?: string;
+  onSetKeeper?: (id: string | undefined) => void;
+  keeperRequired?: boolean;
   onUpdateOrder: (newMatchPlayers: Match['matchPlayers'], newSubQueue: Match['subQueue']) => void;
   onRemoveFromMatch: (playerId: string) => void;
   onAddToMatch: (player: Player) => void;
 }
 
-export function LineupEditor({ match, team, onUpdateOrder, onRemoveFromMatch, onAddToMatch }: Props) {
+export function LineupEditor({ match, team, playerTimes, keeperId, onSetKeeper, keeperRequired, onUpdateOrder, onRemoveFromMatch, onAddToMatch }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -101,11 +125,21 @@ export function LineupEditor({ match, team, onUpdateOrder, onRemoveFromMatch, on
         lineupOrder: reordered.indexOf(mp.playerId),
         onField: reordered.indexOf(mp.playerId) < match.settings.playersOnField,
       }));
-      const newSubQueue = buildSubQueue(newMatchPlayers, 0, match.settings.playersOnField);
+      const newSubQueue = buildSubQueue(
+        newMatchPlayers,
+        0,
+        match.settings.subInterval * 60,
+        (match.settings.firstSubTime ?? 0) * 60,
+        keeperId
+      );
       onUpdateOrder(newMatchPlayers, newSubQueue);
     },
-    [ids, match.matchPlayers, match.settings.playersOnField, onUpdateOrder]
+    [ids, match.matchPlayers, match.settings.playersOnField, match.settings.subInterval, match.settings.firstSubTime, keeperId, onUpdateOrder]
   );
+
+  const handleToggleKeeper = onSetKeeper
+    ? (id: string) => onSetKeeper(id === keeperId ? undefined : id)
+    : undefined;
 
   const matchPlayerIds = new Set(match.matchPlayers.map((mp) => mp.playerId));
   const availablePlayers = team.players.filter((p) => !matchPlayerIds.has(p.id));
@@ -117,6 +151,12 @@ export function LineupEditor({ match, team, onUpdateOrder, onRemoveFromMatch, on
         <p className="text-sm text-slate-400">
           Dra i håndtaket for å endre rekkefølge. De {match.settings.playersOnField} øverste starter.
         </p>
+        {keeperRequired && (
+          <p className="text-xs text-amber-400 font-medium flex items-center gap-1.5 mt-1">
+            <Shield size={13} className="shrink-0" />
+            Klikk skjold-ikonet på en spiller for å velge keeper
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -125,6 +165,7 @@ export function LineupEditor({ match, team, onUpdateOrder, onRemoveFromMatch, on
               {sortedPlayers.map((mp, i) => {
                 const player = team.players.find((p) => p.id === mp.playerId);
                 if (!player) return null;
+                const secs = playerTimes?.[mp.playerId];
                 return (
                   <SortableItem
                     key={mp.playerId}
@@ -132,7 +173,11 @@ export function LineupEditor({ match, team, onUpdateOrder, onRemoveFromMatch, on
                     index={i}
                     name={player.name}
                     isStarter={i < match.settings.playersOnField}
+                    isKeeper={mp.playerId === keeperId}
+                    extraInfo={secs !== undefined ? formatTime(Math.floor(secs)) : undefined}
+                    keeperRequired={keeperRequired}
                     onRemove={onRemoveFromMatch}
+                    onToggleKeeper={handleToggleKeeper}
                   />
                 );
               })}

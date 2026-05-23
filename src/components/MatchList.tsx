@@ -18,6 +18,7 @@ interface Props {
 const statusLabel: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'danger' | 'secondary' }> = {
   pending: { label: 'Ikke startet', variant: 'secondary' },
   active: { label: 'Pågår', variant: 'warning' },
+  halftime: { label: 'Halvtid', variant: 'warning' },
   completed: { label: 'Avsluttet', variant: 'success' },
 };
 
