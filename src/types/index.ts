@@ -50,9 +50,12 @@ export interface Match {
   subQueue: { outId: string; inId: string; dueTime: number }[];
 }
 
+export type PresetKey = '3er' | '5er';
+
 export interface AppState {
   teams: Team[];
   activeTeamId: string | null;
   matches: Match[];
   defaultSettings: MatchSettings;
+  selectedPreset?: PresetKey;
 }

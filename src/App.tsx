@@ -267,6 +267,7 @@ export default function App() {
         {tab === 'admin' && (
           <AdminSettings
             settings={state.defaultSettings}
+            selectedPreset={state.selectedPreset}
             onSave={updateDefaultSettings}
           />
         )}

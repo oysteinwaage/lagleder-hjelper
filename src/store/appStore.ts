@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { AppState, Team, Match, MatchSettings, MatchPlayer } from '@/types';
+import type { AppState, Team, Match, MatchSettings, MatchPlayer, PresetKey } from '@/types';
 import { generateId, buildSubQueue } from '@/lib/utils';
 
 function sortMatchByPlaytime(match: Match, completedPlayers: MatchPlayer[]): Match {
@@ -159,12 +159,13 @@ export function useAppStore() {
   );
 
   const updateDefaultSettings = useCallback(
-    (settings: Partial<MatchSettings>) => {
+    (settings: Partial<MatchSettings>, preset?: PresetKey) => {
       setState((s) => {
         const merged = { ...s.defaultSettings, ...settings };
         return {
           ...s,
           defaultSettings: merged,
+          selectedPreset: preset !== undefined ? preset : s.selectedPreset,
           matches: s.matches.map((m) => applySettingsToPendingMatch(m, merged)),
         };
       });

@@ -3,20 +3,35 @@ import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import type { MatchSettings } from '@/types';
+import type { MatchSettings, PresetKey } from '@/types';
+
+const PRESETS: { key: PresetKey; label: string; values: MatchSettings }[] = [
+  {
+    key: '3er',
+    label: '3\'er',
+    values: { playersOnField: 3, numberOfHalves: 1, halfDuration: 25, firstSubTime: 2, subInterval: 3 },
+  },
+  {
+    key: '5er',
+    label: '5\'er',
+    values: { playersOnField: 5, numberOfHalves: 2, halfDuration: 25, firstSubTime: 3, subInterval: 4 },
+  },
+];
 
 interface Props {
   settings: MatchSettings;
-  onSave: (s: Partial<MatchSettings>) => void;
+  selectedPreset?: PresetKey;
+  onSave: (s: Partial<MatchSettings>, preset?: PresetKey) => void;
 }
 
-export function AdminSettings({ settings, onSave }: Props) {
+export function AdminSettings({ settings, selectedPreset, onSave }: Props) {
   const [local, setLocal] = useState(settings);
   const [inputValues, setInputValues] = useState<Record<keyof MatchSettings, string>>(
     () => Object.fromEntries(
       (Object.keys(settings) as (keyof MatchSettings)[]).map((k) => [k, String(settings[k])])
     ) as Record<keyof MatchSettings, string>
   );
+  const [activePreset, setActivePreset] = useState<PresetKey | ''>(selectedPreset ?? '');
   const [saved, setSaved] = useState(false);
 
   function handleChange(key: keyof MatchSettings, val: string) {
@@ -36,7 +51,7 @@ export function AdminSettings({ settings, onSave }: Props) {
   }
 
   function save() {
-    onSave(local);
+    onSave(local, activePreset || undefined);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -49,6 +64,16 @@ export function AdminSettings({ settings, onSave }: Props) {
     { key: 'subInterval', label: 'Bytte-intervall (etter alle har vært inne)', unit: 'min', min: 1, max: 30 },
   ];
 
+  function applyPreset(key: PresetKey, values: MatchSettings) {
+    setActivePreset(key);
+    setLocal(values);
+    setInputValues(
+      Object.fromEntries(
+        (Object.keys(values) as (keyof MatchSettings)[]).map((k) => [k, String(values[k])])
+      ) as Record<keyof MatchSettings, string>
+    );
+  }
+
   return (
     <Card className="max-w-md">
       <CardHeader>
@@ -58,6 +83,22 @@ export function AdminSettings({ settings, onSave }: Props) {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        <div className="mb-4">
+          <label className="text-xs text-slate-400 mb-1.5 block">Forhåndsvalgte oppsett</label>
+          <select
+            className="w-[150px] bg-slate-700 border border-slate-600 text-slate-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            value={activePreset}
+            onChange={(e) => {
+              const preset = PRESETS.find((p) => p.key === e.target.value);
+              if (preset) applyPreset(preset.key, preset.values);
+            }}
+          >
+            <option value="" disabled>Velg oppsett…</option>
+            {PRESETS.map((p) => (
+              <option key={p.key} value={p.key}>{p.label}</option>
+            ))}
+          </select>
+        </div>
         <div className="space-y-3">
           {fields.map(({ key, label, unit, min, max }) => (
             <div key={key} className="flex items-center gap-3">
