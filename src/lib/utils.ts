@@ -73,7 +73,7 @@ export function buildSubQueue(
       dueTime,
     });
   }
-  return queue;
+  return queue.sort((a, b) => a.dueTime - b.dueTime);
 }
 
 /** Apply a substitution, returning updated matchPlayers and updated subQueue.
@@ -119,16 +119,43 @@ export function applySubstitution(
     (e) => e.outId !== outPlayerId && e.inId !== inPlayerId
   );
 
-  // Pick the on-field player not already planned for substitution as the next "out".
-  const plannedOutIds = new Set(validQueue.map((e) => e.outId));
-  const candidates = [...updated.filter((mp) => mp.onField)]
-    .sort((a, b) => a.lastEventTime - b.lastEventTime)
-    .filter((mp) => !plannedOutIds.has(mp.playerId));
-
   const newQueue = [...validQueue];
-  if (candidates.length > 0) {
-    newQueue.push({ outId: candidates[0].playerId, inId: outPlayerId, dueTime: currentTime + subIntervalSec });
+
+  // All bench players not already in validQueue as inId.
+  const scheduledInIds = new Set(validQueue.map((e) => e.inId));
+  const unscheduledBench = updated.filter((mp) => !mp.onField && !scheduledInIds.has(mp.playerId));
+
+  // Priority: bench players who are NOT the just-benched player, sorted by descending bench wait
+  // time (longest waiting without a planned slot first). The just-benched player goes last.
+  const getBenchWait = (mp: MatchPlayer) => mp.benchSeconds + (currentTime - mp.lastEventTime);
+  const prioritizedBench = [
+    ...unscheduledBench
+      .filter((mp) => mp.playerId !== outPlayerId)
+      .sort((a, b) => getBenchWait(b) - getBenchWait(a)),
+    ...unscheduledBench.filter((mp) => mp.playerId === outPlayerId),
+  ];
+
+  // Field players not already in validQueue as outId, sorted by ascending lastEventTime (longest on field first).
+  const scheduledOutIds = new Set(validQueue.map((e) => e.outId));
+  const candidates = [...updated.filter((mp) => mp.onField && !scheduledOutIds.has(mp.playerId))]
+    .sort((a, b) => a.lastEventTime - b.lastEventTime);
+
+  const pairCount = Math.min(prioritizedBench.length, candidates.length);
+  for (let i = 0; i < pairCount; i++) {
+    const benchMp = prioritizedBench[i];
+    const fieldMp = candidates[i];
+    let dueTime: number;
+    if (benchMp.playerId === outPlayerId) {
+      dueTime = currentTime + subIntervalSec;
+    } else {
+      // Inherit the shortest remaining time from either player's original planned entry.
+      const benchOriginal = match.subQueue.find((e) => e.inId === benchMp.playerId);
+      const fieldOriginal = match.subQueue.find((e) => e.outId === fieldMp.playerId);
+      const times = [benchOriginal?.dueTime, fieldOriginal?.dueTime].filter((t): t is number => t !== undefined);
+      dueTime = times.length > 0 ? Math.min(...times) : currentTime + subIntervalSec;
+    }
+    newQueue.push({ outId: fieldMp.playerId, inId: benchMp.playerId, dueTime });
   }
 
-  return { matchPlayers: updated, subQueue: newQueue };
+  return { matchPlayers: updated, subQueue: newQueue.sort((a, b) => a.dueTime - b.dueTime) };
 }
