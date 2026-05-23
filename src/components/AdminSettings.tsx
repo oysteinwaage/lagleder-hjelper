@@ -31,7 +31,7 @@ export function AdminSettings({ settings, selectedPreset, onSave }: Props) {
       (Object.keys(settings) as (keyof MatchSettings)[]).map((k) => [k, String(settings[k])])
     ) as Record<keyof MatchSettings, string>
   );
-  const [activePreset, setActivePreset] = useState<PresetKey | ''>(selectedPreset ?? '');
+  const [activePreset, setActivePreset] = useState<PresetKey | ''>(selectedPreset ?? '3er');
   const [saved, setSaved] = useState(false);
 
   function handleChange(key: keyof MatchSettings, val: string) {
