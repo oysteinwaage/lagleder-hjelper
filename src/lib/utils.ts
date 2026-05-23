@@ -174,7 +174,7 @@ export function applyKeeperChange(
   const subIntervalSec = match.settings.subInterval * 60;
   const oldKeeperEntry = match.matchPlayers.find((mp) => mp.playerId === oldKeeperId);
   const newKeeperEntry = match.matchPlayers.find((mp) => mp.playerId === newKeeperId);
-  if (!oldKeeperEntry || !newKeeperEntry) {
+  if (!oldKeeperId || !oldKeeperEntry || !newKeeperEntry) {
     return { matchPlayers: match.matchPlayers, subQueue: match.subQueue, keeperId: newKeeperId, keeperSince: currentTime };
   }
 
