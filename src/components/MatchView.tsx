@@ -26,6 +26,7 @@ function getLiveTime(match: Match): number {
 export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack }: Props) {
   const [enterFieldId, setEnterFieldId] = useState<string | null>(null);
   const [enterBenchId, setEnterBenchId] = useState<string | null>(null);
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
   const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, forceUpdate] = useState(0);
 
@@ -187,9 +188,26 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
         </Button>
       )}
       {isActive && (
-        <Button size="sm" variant="destructive" className="w-full" onClick={endMatch}>
+        <Button size="sm" variant="destructive" className="w-full" onClick={() => setShowEndConfirm(true)}>
           <Square size={16} /> Avslutt kamp
         </Button>
+      )}
+
+      {showEndConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-sm space-y-4 shadow-xl">
+            <p className="text-slate-100 font-semibold text-lg">Avslutt kamp?</p>
+            <p className="text-slate-400 text-sm">Er du sikker på at du vil avslutte kampen? Dette kan ikke angres.</p>
+            <div className="flex gap-3 pt-1">
+              <Button variant="destructive" className="flex-1" onClick={() => { setShowEndConfirm(false); endMatch(); }}>
+                Ja, avslutt
+              </Button>
+              <Button variant="outline" className="flex-1" onClick={() => setShowEndConfirm(false)}>
+                Avbryt
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Pending: Lineup editor with add/remove */}
