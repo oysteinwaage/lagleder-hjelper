@@ -665,25 +665,23 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
             </Card>
           )}
 
-          {/* Bench */}
-          {isActive && <Card>
-            <CardContent className="pt-4">
-              <p className="text-sm font-medium text-slate-400 mb-2">Benken</p>
-              <div className="space-y-1.5">
-                {benchPlayers.map((mp) => {
-                  const name = getPlayerName(mp.playerId);
-                  const benchTime = mp.benchSeconds + (isActive ? currentTime - mp.lastEventTime : 0);
-                  return (
-                    <div
-                      key={mp.playerId}
-                      className={`flex items-center justify-between px-3 py-2 rounded-lg bg-slate-700/50 text-sm ${mp.playerId === enterBenchId ? 'player-enter-bench' : ''}`}
-                    >
-                      <span className="text-slate-200">{name}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-500 font-mono text-xs">
-                          {formatTime(Math.floor(benchTime))}
-                        </span>
-                        {!isCompleted && (
+          {/* Spillere (field + bench merged) */}
+          {isActive && (
+            <Card>
+              <CardContent className="pt-4">
+                <p className="text-sm font-medium text-slate-400 mb-2">Spillere</p>
+                <div className="space-y-1.5">
+                  {fieldPlayers.map((mp) => {
+                    const name = getPlayerName(mp.playerId);
+                    const ft = Math.floor(getTimeOnField(mp));
+                    return (
+                      <div
+                        key={mp.playerId}
+                        className={`flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-900/20 text-sm ${mp.playerId === enterFieldId ? 'player-enter-field' : ''}`}
+                      >
+                        <span className="text-slate-200">{name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-emerald-400 font-mono text-xs">{formatTime(ft)}</span>
                           <button
                             onClick={() => handleRemoveFromMatch(mp.playerId)}
                             className="text-slate-600 hover:text-red-400 transition-colors"
@@ -691,69 +689,56 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
                           >
                             <Trash2 size={13} />
                           </button>
-                        )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-                {benchPlayers.length === 0 && (
-                  <p className="text-xs text-slate-600 text-center py-2">Ingen på benken</p>
-                )}
-              </div>
-
-              {/* Add player to bench */}
-              {!isCompleted && availablePlayers.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-slate-700">
-                  <p className="text-xs text-slate-500 mb-2 flex items-center gap-1.5">
-                    <UserPlus size={13} /> Legg til spiller
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {availablePlayers.map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => handleAddToMatch(p)}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm bg-slate-700 hover:bg-emerald-800 text-slate-300 hover:text-white border border-slate-600 hover:border-emerald-600 transition-colors"
+                    );
+                  })}
+                  {benchPlayers.map((mp) => {
+                    const name = getPlayerName(mp.playerId);
+                    const ft = Math.floor(getTimeOnField(mp));
+                    return (
+                      <div
+                        key={mp.playerId}
+                        className={`flex items-center justify-between px-3 py-2 rounded-lg bg-slate-700/50 text-sm ${mp.playerId === enterBenchId ? 'player-enter-bench' : ''}`}
                       >
-                        <span>+</span>
-                        <span>{p.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>}
-
-          {/* Field player times */}
-          {isActive && <Card>
-            <CardContent className="pt-4">
-              <p className="text-sm font-medium text-slate-400 mb-2">På banen</p>
-              <div className="space-y-1.5">
-                {fieldPlayers.map((mp) => {
-                  const name = getPlayerName(mp.playerId);
-                  const ft = Math.floor(getTimeOnField(mp));
-                  return (
-                    <div
-                      key={mp.playerId}
-                      className={`flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-900/20 text-sm ${mp.playerId === enterFieldId ? 'player-enter-field' : ''}`}
-                    >
-                      <span className="text-slate-200">{name}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-emerald-400 font-mono text-xs">{formatTime(ft)}</span>
-                        <button
-                          onClick={() => handleRemoveFromMatch(mp.playerId)}
-                          className="text-slate-600 hover:text-red-400 transition-colors"
-                          title="Fjern fra kamp"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                        <span className="text-slate-400">{name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-500 font-mono text-xs">{formatTime(ft)}</span>
+                          <button
+                            onClick={() => handleRemoveFromMatch(mp.playerId)}
+                            className="text-slate-600 hover:text-red-400 transition-colors"
+                            title="Fjern fra kamp"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
                       </div>
+                    );
+                  })}
+                </div>
+
+                {availablePlayers.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-slate-700">
+                    <p className="text-xs text-slate-500 mb-2 flex items-center gap-1.5">
+                      <UserPlus size={13} /> Legg til spiller
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {availablePlayers.map((p) => (
+                        <button
+                          key={p.id}
+                          onClick={() => handleAddToMatch(p)}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm bg-slate-700 hover:bg-emerald-800 text-slate-300 hover:text-white border border-slate-600 hover:border-emerald-600 transition-colors"
+                        >
+                          <span>+</span>
+                          <span>{p.name}</span>
+                        </button>
+                      ))}
                     </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Active: substitution history */}
           {isActive && match.substitutions.length > 0 && (
