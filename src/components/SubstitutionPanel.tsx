@@ -66,6 +66,7 @@ export function SubstitutionPanel({ match, team, currentTime, keeperId, onSubsti
           style={{ background: 'radial-gradient(ellipse at center, rgba(34,197,94,0.28) 0%, rgba(34,197,94,0) 70%)' }}
         />
       )}
+
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ArrowLeftRight className="text-emerald-400" size={20} />
