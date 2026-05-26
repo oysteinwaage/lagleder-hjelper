@@ -12,7 +12,10 @@ h1{font-size:18px;font-weight:500;margin-bottom:20px;color:#444}
 /* noinspection CssUnusedSymbol */.card{background:#fff;border:1px solid #e5e5e2;border-radius:12px;overflow:hidden}
 .card-header{padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #e5e5e2}
 .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.card-title{font-size:15px;font-weight:500}
+.card-title{font-size:15px;font-weight:500;flex:1}
+/* noinspection CssUnusedSymbol */.add-btn{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #d0d0cc;background:#fafaf8;color:#444;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+/* noinspection CssUnusedSymbol */.add-btn:hover:not(:disabled){background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+/* noinspection CssUnusedSymbol */.add-btn.done{background:#e6f5ee;color:#0f6e56;border-color:#a8d9c0;cursor:default}
 .card-body{padding:0 16px}
 .section-label{font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:#999;padding:10px 0 6px;border-bottom:1px solid #e5e5e2}
 .player-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f0f0ee}
@@ -30,7 +33,7 @@ h1{font-size:18px;font-weight:500;margin-bottom:20px;color:#444}
 </style>
 </head>
 <body>
-<h1>OBOS Miniliga Ready 2026 – VASK-lagene</h1>
+<h1>OBOS Miniliga Ready 2026 – VASK-lagene <span style="font-weight:400;color:#aaa">· 30. mai 2026</span></h1>
 <div class="grid" id="grid"></div>
 <script>
 const teams=[
@@ -53,20 +56,92 @@ const teams=[
    players:["Filip Waage","Ask Woldseth Jerkø","Gustav Jul-Larsen","Falke Vilnes","Mohamad Ahmed Alyosef"],reserve:[],
    games:[{t:"12:24–12:33",b:"BANE 1",o:"Fornebu Airspeed"},{t:"13:00–13:09",b:"BANE 2",o:"Linderud 2"},{t:"13:36–13:45",b:"BANE 2",o:"Heming Sle 2"},{t:"14:12–14:21",b:"BANE 2",o:"Ready 12"},{t:"14:48–14:57",b:"BANE 2",o:"Oppsal 5"}]}
 ];
+const STORAGE_KEY='lagleder_app_v1';
+const TOURNAMENT_DATE='2026-05-30';
+const DEFAULT_SETTINGS={playersOnField:3,numberOfHalves:1,halfDuration:9,subInterval:2,firstSubTime:2};
+
+function genId(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36)}
+
+function buildSubQueue(matchPlayers,subIntervalSec,firstSubTimeSec){
+  const field=[...matchPlayers.filter(p=>p.onField)].sort((a,b)=>a.lastEventTime-b.lastEventTime);
+  const bench=[...matchPlayers.filter(p=>!p.onField)].sort((a,b)=>a.lastEventTime-b.lastEventTime);
+  const virgins=bench.filter(p=>p.fieldSeconds===0);
+  const ordered=[...virgins,...bench.filter(p=>p.fieldSeconds>0)];
+  const useFirst=firstSubTimeSec>0&&virgins.length>0;
+  const virginBase=useFirst?Math.max(firstSubTimeSec,60):0;
+  const q=[];let lastDue=0;
+  for(let i=0;i<Math.min(field.length,ordered.length);i++){
+    const isV=i<virgins.length;
+    let due=useFirst&&isV?virginBase+i*60:useFirst?lastDue+subIntervalSec:(i+1)*subIntervalSec;
+    lastDue=due;
+    q.push({outId:field[i].playerId,inId:ordered[i].playerId,dueTime:due});
+  }
+  return q.sort((a,b)=>a.dueTime-b.dueTime);
+}
+
+function loadAppState(){
+  try{const r=localStorage.getItem(STORAGE_KEY);return r?JSON.parse(r):null}catch{return null}
+}
+
+function teamAlreadyAdded(name){
+  const s=loadAppState();
+  return s&&s.teams&&s.teams.some(t=>t.name===name);
+}
+
+function addTeamToApp(teamDef){
+  const raw=loadAppState();
+  const state=raw||{teams:[],activeTeamId:null,matches:[],defaultSettings:DEFAULT_SETTINGS};
+  const settings={...DEFAULT_SETTINGS,...(state.defaultSettings||{})};
+  const teamId=genId();
+  const players=teamDef.players.map(full=>({id:genId(),name:full.trim().split(' ')[0]}));
+  const team={id:teamId,name:teamDef.name,players};
+  const matches=teamDef.games.map(g=>({
+    id:genId(),teamId,
+    opponent:g.o,
+    date:TOURNAMENT_DATE,
+    time:g.t.split('–')[0].trim(),
+    location:g.b,
+    status:'pending',
+    settings:{...settings},
+    matchPlayers:players.map((p,i)=>({playerId:p.id,fieldSeconds:0,benchSeconds:0,keeperSeconds:0,lastEventTime:0,onField:i<settings.playersOnField,lineupOrder:i})),
+    elapsedSeconds:0,substitutions:[],
+    subQueue:buildSubQueue(players.map((p,i)=>({playerId:p.id,fieldSeconds:0,benchSeconds:0,lastEventTime:0,onField:i<settings.playersOnField,lineupOrder:i})),settings.subInterval*60,(settings.firstSubTime??0)*60),
+    preset:state.selectedPreset
+  }));
+  state.teams.push(team);
+  state.matches.push(...matches);
+  state.activeTeamId=teamId;
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+}
+
 function ini(n){const p=n.trim().split(" ");return(p[0][0]+(p[p.length-1][0])).toUpperCase()}
 const grid=document.getElementById("grid");
 teams.forEach(t=>{
   const res=new Set(t.reserve);
+  const alreadyAdded=teamAlreadyAdded(t.name);
   const card=document.createElement("div");
   card.className="card";
   card.innerHTML=`
-    <div class="card-header"><div class="dot" style="background:${t.color}"></div><span class="card-title">${t.name}</span></div>
+    <div class="card-header">
+      <div class="dot" style="background:${t.color}"></div>
+      <span class="card-title">${t.name}</span>
+      <button class="add-btn${alreadyAdded?' done':''}" ${alreadyAdded?'disabled':''} data-team="${t.name}">
+        ${alreadyAdded?'Lagt til ✓':'Legg til lag og kamper'}
+      </button>
+    </div>
     <div class="card-body">
       <div class="section-label">Spillere (${t.players.length})</div>
       <div>${t.players.map(p=>`<div class="player-row"><div class="avatar" style="background:${t.bg};color:${t.text}">${ini(p)}</div><span class="player-name${res.has(p)?' reserve':''}">${p}</span></div>`).join("")}</div>
       <div class="section-label">Kamper (${t.games.length})</div>
       <div>${t.games.map(g=>`<div class="game-item"><span class="game-time">⏱ ${g.t}</span><span class="badge ${g.b.startsWith("BINGE")?"binge":"bane"}">${g.b}</span><span class="game-opp">vs ${g.o}</span></div>`).join("")}</div>
     </div>`;
+  const btn=card.querySelector('.add-btn');
+  if(!alreadyAdded){
+    btn.addEventListener('click',()=>{
+      addTeamToApp(t);
+      window.location.href='/';
+    });
+  }
   grid.appendChild(card);
 });
 </script>
