@@ -9,7 +9,7 @@ const PRESETS: { key: PresetKey; label: string; values: MatchSettings }[] = [
   {
     key: '3er',
     label: '3\'er',
-    values: { playersOnField: 3, numberOfHalves: 1, halfDuration: 25, firstSubTime: 2, subInterval: 3 },
+    values: { playersOnField: 3, numberOfHalves: 1, halfDuration: 9, firstSubTime: 2, subInterval: 2 },
   },
   {
     key: '5er',

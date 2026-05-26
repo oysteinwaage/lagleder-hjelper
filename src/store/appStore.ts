@@ -53,9 +53,9 @@ const STORAGE_KEY = 'lagleder_app_v1';
 const DEFAULT_SETTINGS: MatchSettings = {
   playersOnField: 3,
   numberOfHalves: 1,
-  halfDuration: 25,
-  subInterval: 3,
-  firstSubTime: 0,
+  halfDuration: 9,
+  subInterval: 2,
+  firstSubTime: 2,
 };
 
 function loadState(): AppState {
