@@ -7,6 +7,8 @@ import { MatchView } from '@/components/MatchView';
 import { AdminSettings } from '@/components/AdminSettings';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { PRESETS } from '@/components/AdminSettings';
+import type { PresetKey } from '@/types';
 import './index.css';
 
 type Tab = 'team' | 'matches' | 'admin';
@@ -32,12 +34,21 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('team');
   const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
   const [newTeamName, setNewTeamName] = useState('');
+  const [onboardingPreset, setOnboardingPreset] = useState<PresetKey>('3er');
   const [showNewTeam, setShowNewTeam] = useState(false);
   const [confirmDeleteTeamId, setConfirmDeleteTeamId] = useState<string | null>(null);
 
   const activeMatch = activeMatchId
     ? state.matches.find((m) => m.id === activeMatchId) ?? null
     : null;
+
+  function handleOnboardingCreate() {
+    if (!newTeamName.trim()) return;
+    createTeam(newTeamName.trim());
+    const preset = PRESETS.find((p) => p.key === onboardingPreset);
+    if (preset) updateDefaultSettings(preset.values, preset.key);
+    setNewTeamName('');
+  }
 
   // No teams yet — onboarding screen
   if (state.teams.length === 0) {
@@ -51,30 +62,31 @@ export default function App() {
           </div>
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
             <p className="text-sm text-slate-400 mb-3">Opprett ditt første lag</p>
-            <div className="flex gap-2">
+            <div className="flex gap-2 mb-3">
               <Input
                 placeholder="Lagnavn..."
                 value={newTeamName}
                 onChange={(e) => setNewTeamName(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && newTeamName.trim()) {
-                    createTeam(newTeamName.trim());
-                    setNewTeamName('');
-                  }
+                  if (e.key === 'Enter') handleOnboardingCreate();
                 }}
                 autoFocus
               />
-              <Button
-                onClick={() => {
-                  if (newTeamName.trim()) {
-                    createTeam(newTeamName.trim());
-                    setNewTeamName('');
-                  }
-                }}
-                disabled={!newTeamName.trim()}
-              >
+              <Button onClick={handleOnboardingCreate} disabled={!newTeamName.trim()}>
                 Opprett
               </Button>
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Type oppsett</label>
+              <select
+                value={onboardingPreset}
+                onChange={(e) => setOnboardingPreset(e.target.value as PresetKey)}
+                className="w-full rounded-md border border-slate-600 bg-slate-700 text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+              >
+                {PRESETS.map((p) => (
+                  <option key={p.key} value={p.key}>{p.label}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

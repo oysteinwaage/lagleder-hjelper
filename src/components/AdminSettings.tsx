@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import type { MatchSettings, PresetKey } from '@/types';
 
-const PRESETS: { key: PresetKey; label: string; values: MatchSettings }[] = [
+export const PRESETS: { key: PresetKey; label: string; values: MatchSettings }[] = [
   {
     key: '3er',
     label: '3\'er',
