@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { AppState, Team, Match, MatchSettings, MatchPlayer, MatchResult, PresetKey } from '@/types';
+import type { IcalMatch } from '@/lib/ical';
 import { generateId, buildSubQueue } from '@/lib/utils';
 
 function sortMatchByPlaytime(match: Match, completedPlayers: MatchPlayer[]): Match {
@@ -265,6 +266,84 @@ export function useAppStore() {
     [setState]
   );
 
+  const importMatchesForTeam = useCallback(
+    (rawMatches: IcalMatch[]) => {
+      setState((s) => {
+        const team = s.teams.find((t) => t.id === s.activeTeamId);
+        if (!team) return s;
+        const settings = { ...s.defaultSettings };
+
+        // Build the same matchPlayers structure as createMatch does
+        const matchPlayers: MatchPlayer[] = team.players.map((p, i) => ({
+          playerId: p.id,
+          fieldSeconds: 0,
+          benchSeconds: 0,
+          keeperSeconds: 0,
+          lastEventTime: 0,
+          onField: i < settings.playersOnField,
+          lineupOrder: i,
+        }));
+        const subQueue = buildSubQueue(
+          matchPlayers,
+          0,
+          settings.subInterval * 60,
+          (settings.firstSubTime ?? 0) * 60
+        );
+
+        const newMatches: Match[] = rawMatches.map((rm) => ({
+          id: generateId(),
+          teamId: team.id,
+          opponent: rm.opponent,
+          date: rm.date,
+          time: rm.time,
+          location: rm.location,
+          status: 'pending' as const,
+          settings: { ...settings },
+          matchPlayers: matchPlayers.map((mp) => ({ ...mp })),
+          elapsedSeconds: 0,
+          substitutions: [],
+          subQueue: subQueue.map((sq) => ({ ...sq })),
+          preset: s.selectedPreset,
+        }));
+        return { ...s, matches: [...s.matches, ...newMatches] };
+      });
+    },
+    [setState]
+  );
+
+  const importCalendar = useCallback(
+    (teamName: string, rawMatches: IcalMatch[]) => {
+      setState((s) => {
+        const team: Team = { id: generateId(), name: teamName, players: [] };
+        const settings = { ...s.defaultSettings };
+
+        const newMatches: Match[] = rawMatches.map((rm) => ({
+          id: generateId(),
+          teamId: team.id,
+          opponent: rm.opponent,
+          date: rm.date,
+          time: rm.time,
+          location: rm.location,
+          status: 'pending' as const,
+          settings,
+          matchPlayers: [],
+          elapsedSeconds: 0,
+          substitutions: [],
+          subQueue: [],
+          preset: s.selectedPreset,
+        }));
+
+        return {
+          ...s,
+          teams: [...s.teams, team],
+          activeTeamId: team.id,
+          matches: [...s.matches, ...newMatches],
+        };
+      });
+    },
+    [setState]
+  );
+
   const deleteTeam = useCallback(
     (teamId: string) => {
       setState((s) => {
@@ -298,5 +377,7 @@ export function useAppStore() {
     updateMatch,
     deleteMatch,
     deleteTeam,
+    importCalendar,
+    importMatchesForTeam,
   };
 }

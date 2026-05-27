@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Trophy, Settings, Plus, Trash2 } from 'lucide-react';
+import { Users, Trophy, Settings, Plus, Trash2, Download, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { TeamSetup } from '@/components/TeamSetup';
 import { MatchList } from '@/components/MatchList';
@@ -8,6 +8,7 @@ import { AdminSettings } from '@/components/AdminSettings';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PRESETS } from '@/components/AdminSettings';
+import { fetchIcal, parseIcal } from '@/lib/ical';
 import type { PresetKey } from '@/types';
 import './index.css';
 
@@ -29,6 +30,8 @@ export default function App() {
     updateMatch,
     deleteMatch,
     deleteTeam,
+    importCalendar,
+    importMatchesForTeam,
   } = useAppStore();
 
   const [tab, setTab] = useState<Tab>('team');
@@ -37,6 +40,12 @@ export default function App() {
   const [onboardingPreset, setOnboardingPreset] = useState<PresetKey>('3er');
   const [showNewTeam, setShowNewTeam] = useState(false);
   const [confirmDeleteTeamId, setConfirmDeleteTeamId] = useState<string | null>(null);
+
+  // Calendar import state
+  const [importUrl, setImportUrl] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState('');
+  const [importSuccess, setImportSuccess] = useState('');
 
   const activeMatch = activeMatchId
     ? state.matches.find((m) => m.id === activeMatchId) ?? null
@@ -50,22 +59,58 @@ export default function App() {
     setNewTeamName('');
   }
 
+  async function handleImportCalendar() {
+    const url = importUrl.trim();
+    if (!url) return;
+    setImportError('');
+    setImportSuccess('');
+    setImporting(true);
+    try {
+      const text = await fetchIcal(url);
+      const today = new Date().toISOString().slice(0, 10);
+      const { teamName, matches } = parseIcal(text, today);
+
+      if (!teamName) {
+        setImportError('Fant ikke lagnavn i kalenderen');
+        return;
+      }
+      if (matches.length === 0) {
+        setImportError('Ingen kommende kamper funnet i kalenderen');
+        return;
+      }
+
+      importCalendar(teamName, matches);
+      const preset = PRESETS.find((p) => p.key === onboardingPreset);
+      if (preset) updateDefaultSettings(preset.values, preset.key);
+
+      setImportSuccess(`Importerte «${teamName}» med ${matches.length} kommende kamp${matches.length !== 1 ? 'er' : ''}`);
+      setImportUrl('');
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Noe gikk galt under import');
+    } finally {
+      setImporting(false);
+    }
+  }
+
   // No teams yet — onboarding screen
   if (state.teams.length === 0) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
+        <div className="w-full max-w-md space-y-4">
+          <div className="text-center mb-6">
             <div className="text-5xl mb-3">⚽</div>
             <h1 className="text-3xl font-bold text-slate-100">Lagleder</h1>
             <p className="text-slate-400 mt-1">Bytte-hjelper for barnefotball</p>
           </div>
+
           <a
             href="/kampoppsett-obos-miniliga-roa"
-            className="flex items-center justify-center gap-2 w-full mb-4 px-4 py-3 rounded-xl bg-[#003087] hover:bg-[#002070] text-white text-sm font-medium transition-colors"
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-[#003087] hover:bg-[#002070] text-white text-sm font-medium transition-colors"
           >
             <span>🏆</span> OBOS Miniliga – kampoppsett Ready 2026
           </a>
+
+          {/* Manual team creation */}
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
             <p className="text-sm text-slate-400 mb-3">Opprett ditt første lag</p>
             <div className="flex gap-2 mb-3">
@@ -73,9 +118,7 @@ export default function App() {
                 placeholder="Lagnavn..."
                 value={newTeamName}
                 onChange={(e) => setNewTeamName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleOnboardingCreate();
-                }}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleOnboardingCreate(); }}
                 autoFocus
               />
               <Button onClick={handleOnboardingCreate} disabled={!newTeamName.trim()}>
@@ -94,6 +137,65 @@ export default function App() {
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 border-t border-slate-700" />
+            <span className="text-xs text-slate-500 uppercase tracking-wider">eller</span>
+            <div className="flex-1 border-t border-slate-700" />
+          </div>
+
+          {/* Calendar import */}
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Download size={16} className="text-emerald-400 shrink-0" />
+              <p className="text-sm font-medium text-slate-200">Importer fra fotball.no</p>
+            </div>
+            <p className="text-xs text-slate-500">
+              Lim inn kalenderlenken til laget ditt fra fotball.no. Lag og kommende kamper opprettes automatisk.
+            </p>
+            <Input
+              placeholder="https://www.fotball.no/footballapi/Calendar/GetCalendar?teamId=..."
+              value={importUrl}
+              onChange={(e) => { setImportUrl(e.target.value); setImportError(''); setImportSuccess(''); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && importUrl.trim() && !importing) handleImportCalendar(); }}
+              className="text-sm font-mono"
+            />
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Type oppsett</label>
+              <select
+                value={onboardingPreset}
+                onChange={(e) => setOnboardingPreset(e.target.value as PresetKey)}
+                className="w-full rounded-md border border-slate-600 bg-slate-700 text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+              >
+                {PRESETS.map((p) => (
+                  <option key={p.key} value={p.key}>{p.label}</option>
+                ))}
+              </select>
+            </div>
+            <Button
+              className="w-full"
+              onClick={handleImportCalendar}
+              disabled={!importUrl.trim() || importing}
+            >
+              <Loader2 size={15} className={importing ? 'animate-spin' : 'hidden'} />
+              <Download size={15} className={importing ? 'hidden' : ''} />
+              {importing ? 'Henter kalender...' : 'Importer lag'}
+            </Button>
+
+            {importError && (
+              <div className="flex items-start gap-2 text-red-400 text-sm bg-red-950/40 border border-red-800/50 rounded-lg px-3 py-2">
+                <AlertCircle size={15} className="shrink-0 mt-0.5" />
+                <span>{importError}</span>
+              </div>
+            )}
+            {importSuccess && (
+              <div className="flex items-start gap-2 text-emerald-400 text-sm bg-emerald-950/40 border border-emerald-800/50 rounded-lg px-3 py-2">
+                <CheckCircle2 size={15} className="shrink-0 mt-0.5" />
+                <span>{importSuccess}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -284,6 +386,7 @@ export default function App() {
               onCreateMatch={createMatch}
               onDeleteMatch={deleteMatch}
               onSelectMatch={setActiveMatchId}
+              onImportMatches={importMatchesForTeam}
             />
           </>
         )}
