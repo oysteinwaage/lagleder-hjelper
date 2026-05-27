@@ -108,7 +108,7 @@ export default function App() {
           match={activeMatch}
           team={activeTeam}
           onUpdateMatch={(updater) => updateMatch(activeMatch.id, updater)}
-          onCompleteMatch={(frozenPlayers, finalTime) => completeMatch(activeMatch.id, frozenPlayers, finalTime)}
+          onCompleteMatch={(frozenPlayers, finalTime, result) => completeMatch(activeMatch.id, frozenPlayers, finalTime, result)}
           onBack={() => setActiveMatchId(null)}
         />
       </div>

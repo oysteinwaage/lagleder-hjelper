@@ -83,6 +83,17 @@ export function MatchList({ matches, team, onCreateMatch, onDeleteMatch, onSelec
                   {where && <span> · {where}</span>}
                 </div>
               </div>
+              {m.result && m.status === 'completed' && (
+                <div className="flex items-center gap-1 font-mono text-sm font-bold shrink-0">
+                  <span className={m.result.homeScore > m.result.awayScore ? 'text-emerald-400' : m.result.homeScore < m.result.awayScore ? 'text-red-400' : 'text-slate-300'}>
+                    {m.result.homeScore}
+                  </span>
+                  <span className="text-slate-600">–</span>
+                  <span className={m.result.awayScore > m.result.homeScore ? 'text-emerald-400' : m.result.awayScore < m.result.homeScore ? 'text-red-400' : 'text-slate-300'}>
+                    {m.result.awayScore}
+                  </span>
+                </div>
+              )}
               <Badge variant={st.variant}>{st.label}</Badge>
               {isConfirming ? (
                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>

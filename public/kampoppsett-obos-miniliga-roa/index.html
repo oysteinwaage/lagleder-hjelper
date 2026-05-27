@@ -30,9 +30,16 @@ h1{font-size:18px;font-weight:500;margin-bottom:20px;color:#444}
 /* noinspection CssUnusedSymbol */.bane{background:#E6F1FB;color:#0C447C}
 /* noinspection CssUnusedSymbol */.binge{background:#EAF3DE;color:#27500A}
 .game-opp{font-size:12px;color:#666}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#444;background:#fff;border:1px solid #e5e5e2;border-radius:8px;padding:6px 14px;cursor:pointer;text-decoration:none;margin-bottom:16px;transition:background .15s,color .15s,border-color .15s}
+.back-btn:hover{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.back-btn svg{width:14px;height:14px;flex-shrink:0}
 </style>
 </head>
 <body>
+<a href="/" class="back-btn">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  Tilbake til app
+</a>
 <h1>OBOS Miniliga Ready 2026 – VASK-lagene <span style="font-weight:400;color:#aaa">· 30. mai 2026</span></h1>
 <div class="grid" id="grid"></div>
 <script>

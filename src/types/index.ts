@@ -35,6 +35,11 @@ export interface SubstitutionEvent {
   inPlayerId: string;
 }
 
+export interface MatchResult {
+  homeScore: number;
+  awayScore: number;
+}
+
 export interface Match {
   id: string;
   teamId: string;
@@ -53,6 +58,7 @@ export interface Match {
   preset?: PresetKey;
   substitutions: SubstitutionEvent[];
   subQueue: { outId: string; inId: string; dueTime: number }[];
+  result?: MatchResult;
 }
 
 export type PresetKey = '3er' | '5er';

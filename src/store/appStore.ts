@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { AppState, Team, Match, MatchSettings, MatchPlayer, PresetKey } from '@/types';
+import type { AppState, Team, Match, MatchSettings, MatchPlayer, MatchResult, PresetKey } from '@/types';
 import { generateId, buildSubQueue } from '@/lib/utils';
 
 function sortMatchByPlaytime(match: Match, completedPlayers: MatchPlayer[]): Match {
@@ -217,7 +217,7 @@ export function useAppStore() {
   );
 
   const completeMatch = useCallback(
-    (matchId: string, frozenPlayers: MatchPlayer[], finalTime: number) => {
+    (matchId: string, frozenPlayers: MatchPlayer[], finalTime: number, result?: MatchResult) => {
       setState((s) => {
         const match = s.matches.find((m) => m.id === matchId);
         if (!match) return s;
@@ -227,6 +227,7 @@ export function useAppStore() {
           status: 'completed',
           elapsedSeconds: match.elapsedSeconds + finalTime,
           matchPlayers: frozenPlayers,
+          ...(result !== undefined ? { result } : {}),
         };
 
         // Find the next pending match for the same team, sorted by date/time

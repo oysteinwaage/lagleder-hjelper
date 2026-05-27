@@ -1,18 +1,19 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
-import { Play, Square, Pause, ArrowLeft, Trash2, UserPlus, Shield, ArrowDown, ArrowUp } from 'lucide-react';
+import { Play, Square, Pause, ArrowLeft, Trash2, UserPlus, Shield, ArrowDown, ArrowUp, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { FootballPitch } from '@/components/FootballPitch';
 import { SubstitutionPanel } from '@/components/SubstitutionPanel';
 import { LineupEditor } from '@/components/LineupEditor';
 import { formatTime, formatDate, applySubstitution, buildSubQueue, applyKeeperChange } from '@/lib/utils';
-import type { Match, MatchPlayer, Player, Team } from '@/types';
+import type { Match, MatchPlayer, MatchResult, Player, Team } from '@/types';
 
 interface Props {
   match: Match;
   team: Team;
   onUpdateMatch: (updater: (m: Match) => Match) => void;
-  onCompleteMatch: (frozenPlayers: MatchPlayer[], finalTime: number) => void;
+  onCompleteMatch: (frozenPlayers: MatchPlayer[], finalTime: number, result?: MatchResult) => void;
   onBack: () => void;
 }
 
@@ -52,6 +53,12 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
   const [enterFieldId, setEnterFieldId] = useState<string | null>(null);
   const [enterBenchId, setEnterBenchId] = useState<string | null>(null);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [resultHome, setResultHome] = useState('');
+  const [resultAway, setResultAway] = useState('');
+  const [showEditResult, setShowEditResult] = useState(false);
+  const [editHome, setEditHome] = useState('');
+  const [editAway, setEditAway] = useState('');
   const [showKeeperModal, setShowKeeperModal] = useState(false);
   const [keeperRequiredError, setKeeperRequiredError] = useState(false);
   const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -123,7 +130,7 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
     });
   }, [onUpdateMatch]);
 
-  const endMatch = useCallback(() => {
+  const endMatch = useCallback((result?: MatchResult) => {
     const finalTime = getLiveTime(match);
     const frozenPlayers = match.matchPlayers.map((mp): MatchPlayer => ({
       ...mp,
@@ -138,7 +145,7 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
         : mp.keeperSeconds,
       lastEventTime: finalTime,
     }));
-    onCompleteMatch(frozenPlayers, finalTime);
+    onCompleteMatch(frozenPlayers, finalTime, result);
   }, [match, onCompleteMatch]);
 
   const handleSubstitute = useCallback(
@@ -404,10 +411,140 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
             <p className="text-slate-100 font-semibold text-lg">Avslutt kamp?</p>
             <p className="text-slate-400 text-sm">Er du sikker på at du vil avslutte kampen? Dette kan ikke angres.</p>
             <div className="flex gap-3 pt-1">
-              <Button variant="destructive" className="flex-1" onClick={() => { setShowEndConfirm(false); endMatch(); }}>
+              <Button variant="destructive" className="flex-1" onClick={() => {
+                setShowEndConfirm(false);
+                setResultHome('');
+                setResultAway('');
+                setShowResultModal(true);
+              }}>
                 Ja, avslutt
               </Button>
               <Button variant="outline" className="flex-1" onClick={() => setShowEndConfirm(false)}>
+                Avbryt
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showResultModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-sm space-y-5 shadow-xl">
+            <div>
+              <p className="text-slate-100 font-semibold text-lg">Hva ble resultatet?</p>
+              <p className="text-slate-500 text-sm mt-0.5">Valgfritt – kan legges til i ettertid</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 text-center space-y-1">
+                <p className="text-xs text-slate-400 truncate">{team.name}</p>
+                <Input
+                  type="number"
+                  min="0"
+                  value={resultHome}
+                  onChange={(e) => setResultHome(e.target.value)}
+                  className="text-center text-2xl font-bold font-mono h-14"
+                  placeholder="0"
+                  autoFocus
+                />
+              </div>
+              <span className="text-slate-500 text-2xl font-bold mt-5">–</span>
+              <div className="flex-1 text-center space-y-1">
+                <p className="text-xs text-slate-400 truncate">{match.opponent}</p>
+                <Input
+                  type="number"
+                  min="0"
+                  value={resultAway}
+                  onChange={(e) => setResultAway(e.target.value)}
+                  className="text-center text-2xl font-bold font-mono h-14"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 pt-1">
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  const h = parseInt(resultHome);
+                  const a = parseInt(resultAway);
+                  const result = (!isNaN(h) && !isNaN(a)) ? { homeScore: h, awayScore: a } : undefined;
+                  setShowResultModal(false);
+                  endMatch(result);
+                }}
+              >
+                Lagre
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setShowResultModal(false);
+                  endMatch(undefined);
+                }}
+              >
+                Hopp over
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEditResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-sm space-y-5 shadow-xl">
+            <p className="text-slate-100 font-semibold text-lg">Rediger resultat</p>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 text-center space-y-1">
+                <p className="text-xs text-slate-400 truncate">{team.name}</p>
+                <Input
+                  type="number"
+                  min="0"
+                  value={editHome}
+                  onChange={(e) => setEditHome(e.target.value)}
+                  className="text-center text-2xl font-bold font-mono h-14"
+                  placeholder="0"
+                  autoFocus
+                />
+              </div>
+              <span className="text-slate-500 text-2xl font-bold mt-5">–</span>
+              <div className="flex-1 text-center space-y-1">
+                <p className="text-xs text-slate-400 truncate">{match.opponent}</p>
+                <Input
+                  type="number"
+                  min="0"
+                  value={editAway}
+                  onChange={(e) => setEditAway(e.target.value)}
+                  className="text-center text-2xl font-bold font-mono h-14"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 pt-1">
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  const h = parseInt(editHome);
+                  const a = parseInt(editAway);
+                  if (!isNaN(h) && !isNaN(a)) {
+                    onUpdateMatch((m) => ({ ...m, result: { homeScore: h, awayScore: a } }));
+                  }
+                  setShowEditResult(false);
+                }}
+              >
+                Lagre
+              </Button>
+              {match.result && (
+                <Button
+                  variant="ghost"
+                  className="text-red-400 hover:text-red-300"
+                  onClick={() => {
+                    onUpdateMatch((m) => { const { result: _r, ...rest } = m; return rest as Match; });
+                    setShowEditResult(false);
+                  }}
+                >
+                  Fjern
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => setShowEditResult(false)}>
                 Avbryt
               </Button>
             </div>
@@ -507,6 +644,46 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
       {(isActive || isCompleted) && (
         <div className="space-y-4">
           {isActive && <FootballPitch match={match} team={team} enterFieldId={enterFieldId} enterBenchId={enterBenchId} currentTime={currentTime} keeperId={match.keeperId} />}
+
+          {/* Completed: result card */}
+          {isCompleted && (
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    {match.result ? (
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-slate-500 truncate max-w-[80px]">{team.name}</span>
+                        <div className="flex items-center gap-2 text-2xl font-bold font-mono">
+                          <span className={match.result.homeScore > match.result.awayScore ? 'text-emerald-400' : match.result.homeScore < match.result.awayScore ? 'text-red-400' : 'text-slate-300'}>
+                            {match.result.homeScore}
+                          </span>
+                          <span className="text-slate-600">–</span>
+                          <span className={match.result.awayScore > match.result.homeScore ? 'text-emerald-400' : match.result.awayScore < match.result.homeScore ? 'text-red-400' : 'text-slate-300'}>
+                            {match.result.awayScore}
+                          </span>
+                        </div>
+                        <span className="text-xs text-slate-500 truncate max-w-[80px]">{match.opponent}</span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-500 text-sm">Ingen resultat registrert</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditHome(match.result?.homeScore?.toString() ?? '');
+                      setEditAway(match.result?.awayScore?.toString() ?? '');
+                      setShowEditResult(true);
+                    }}
+                    className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+                  >
+                    <Pencil size={12} />
+                    {match.result ? 'Rediger' : 'Legg til resultat'}
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Completed: summary first, then substitution history */}
           {isCompleted && (
