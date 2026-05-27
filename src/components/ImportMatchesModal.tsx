@@ -67,7 +67,7 @@ export function ImportMatchesModal({ onClose, onImport }: Props) {
             <li>Gå til <span className="text-slate-300">fotball.no/turneringer</span> og finn laget ditt</li>
             <li>Åpne lagets side under <span className="text-slate-300 inline-flex items-center gap-1">Kamper <ArrowRight size={11} /> Kamp laget ditt spiller <ArrowRight size={11} /> Klikk på ditt lag</span></li>
             <li>Klikk så på <span className="text-slate-300 inline-flex items-center gap-1">Kamper <ArrowRight size={11} /> Alle Kamper <ArrowRight size={11} /> Abonner på kalender</span></li>
-            <li>Kopier lenken til <span className="text-slate-300">kalender-abonnementet</span></li>
+            <li>Kopier lenken til <span className="text-slate-300">kalender-abonnementet</span> (Ikke "Trykk på iPhone", kopier fra teksten)</li>
           </ol>
           <a
             href="https://www.fotball.no/turneringer/"
