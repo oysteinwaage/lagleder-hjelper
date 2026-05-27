@@ -37,7 +37,8 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('team');
   const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
   const [newTeamName, setNewTeamName] = useState('');
-  const [onboardingPreset, setOnboardingPreset] = useState<PresetKey>('3er');
+  const [createPreset, setCreatePreset] = useState<PresetKey>('3er');
+  const [importPreset, setImportPreset] = useState<PresetKey>('5er');
   const [showNewTeam, setShowNewTeam] = useState(false);
   const [confirmDeleteTeamId, setConfirmDeleteTeamId] = useState<string | null>(null);
 
@@ -54,7 +55,7 @@ export default function App() {
   function handleOnboardingCreate() {
     if (!newTeamName.trim()) return;
     createTeam(newTeamName.trim());
-    const preset = PRESETS.find((p) => p.key === onboardingPreset);
+    const preset = PRESETS.find((p) => p.key === createPreset);
     if (preset) updateDefaultSettings(preset.values, preset.key);
     setNewTeamName('');
   }
@@ -80,7 +81,7 @@ export default function App() {
       }
 
       importCalendar(teamName, matches);
-      const preset = PRESETS.find((p) => p.key === onboardingPreset);
+      const preset = PRESETS.find((p) => p.key === importPreset);
       if (preset) updateDefaultSettings(preset.values, preset.key);
 
       setImportSuccess(`Importerte «${teamName}» med ${matches.length} kommende kamp${matches.length !== 1 ? 'er' : ''}`);
@@ -128,8 +129,8 @@ export default function App() {
             <div>
               <label className="block text-xs text-slate-400 mb-1">Type oppsett</label>
               <select
-                value={onboardingPreset}
-                onChange={(e) => setOnboardingPreset(e.target.value as PresetKey)}
+                value={createPreset}
+                onChange={(e) => setCreatePreset(e.target.value as PresetKey)}
                 className="w-full rounded-md border border-slate-600 bg-slate-700 text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
               >
                 {PRESETS.map((p) => (
@@ -165,8 +166,8 @@ export default function App() {
             <div>
               <label className="block text-xs text-slate-400 mb-1">Type oppsett</label>
               <select
-                value={onboardingPreset}
-                onChange={(e) => setOnboardingPreset(e.target.value as PresetKey)}
+                value={importPreset}
+                onChange={(e) => setImportPreset(e.target.value as PresetKey)}
                 className="w-full rounded-md border border-slate-600 bg-slate-700 text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
               >
                 {PRESETS.map((p) => (
