@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { Users, Trophy, Settings, Plus, Trash2, Download, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Users, Trophy, Settings, Plus, Trash2, Download } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { TeamSetup } from '@/components/TeamSetup';
 import { MatchList } from '@/components/MatchList';
 import { MatchView } from '@/components/MatchView';
 import { AdminSettings } from '@/components/AdminSettings';
+import { ImportMatchesModal } from '@/components/ImportMatchesModal';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PRESETS } from '@/components/AdminSettings';
-import { fetchIcal, parseIcal } from '@/lib/ical';
+import type { IcalMatch } from '@/lib/ical';
 import type { PresetKey } from '@/types';
 import './index.css';
 
@@ -42,11 +43,7 @@ export default function App() {
   const [showNewTeam, setShowNewTeam] = useState(false);
   const [confirmDeleteTeamId, setConfirmDeleteTeamId] = useState<string | null>(null);
 
-  // Calendar import state
-  const [importUrl, setImportUrl] = useState('');
-  const [importing, setImporting] = useState(false);
-  const [importError, setImportError] = useState('');
-  const [importSuccess, setImportSuccess] = useState('');
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const activeMatch = activeMatchId
     ? state.matches.find((m) => m.id === activeMatchId) ?? null
@@ -60,37 +57,11 @@ export default function App() {
     setNewTeamName('');
   }
 
-  async function handleImportCalendar() {
-    const url = importUrl.trim();
-    if (!url) return;
-    setImportError('');
-    setImportSuccess('');
-    setImporting(true);
-    try {
-      const text = await fetchIcal(url);
-      const today = new Date().toISOString().slice(0, 10);
-      const { teamName, matches } = parseIcal(text, today);
-
-      if (!teamName) {
-        setImportError('Fant ikke lagnavn i kalenderen');
-        return;
-      }
-      if (matches.length === 0) {
-        setImportError('Ingen kommende kamper funnet i kalenderen');
-        return;
-      }
-
-      importCalendar(teamName, matches);
-      const preset = PRESETS.find((p) => p.key === importPreset);
-      if (preset) updateDefaultSettings(preset.values, preset.key);
-
-      setImportSuccess(`Importerte «${teamName}» med ${matches.length} kommende kamp${matches.length !== 1 ? 'er' : ''}`);
-      setImportUrl('');
-    } catch (err) {
-      setImportError(err instanceof Error ? err.message : 'Noe gikk galt under import');
-    } finally {
-      setImporting(false);
-    }
+  function handleCalendarImport(matches: IcalMatch[], teamName: string) {
+    if (!teamName || matches.length === 0) return;
+    importCalendar(teamName, matches);
+    const preset = PRESETS.find((p) => p.key === importPreset);
+    if (preset) updateDefaultSettings(preset.values, preset.key);
   }
 
   // No teams yet — onboarding screen
@@ -154,15 +125,8 @@ export default function App() {
               <p className="text-sm font-medium text-slate-200">Importer fra fotball.no</p>
             </div>
             <p className="text-xs text-slate-500">
-              Lim inn kalenderlenken til laget ditt fra fotball.no. Lag og kommende kamper opprettes automatisk.
+              Hent lag og kommende kamper automatisk fra fotball.no-kalenderen din.
             </p>
-            <Input
-              placeholder="https://www.fotball.no/footballapi/Calendar/GetCalendar?teamId=..."
-              value={importUrl}
-              onChange={(e) => { setImportUrl(e.target.value); setImportError(''); setImportSuccess(''); }}
-              onKeyDown={(e) => { if (e.key === 'Enter' && importUrl.trim() && !importing) handleImportCalendar(); }}
-              className="text-sm font-mono"
-            />
             <div>
               <label className="block text-xs text-slate-400 mb-1">Type oppsett</label>
               <select
@@ -175,29 +139,20 @@ export default function App() {
                 ))}
               </select>
             </div>
-            <Button
-              className="w-full"
-              onClick={handleImportCalendar}
-              disabled={!importUrl.trim() || importing}
-            >
-              <Loader2 size={15} className={importing ? 'animate-spin' : 'hidden'} />
-              <Download size={15} className={importing ? 'hidden' : ''} />
-              {importing ? 'Henter kalender...' : 'Importer lag'}
+            <Button className="w-full" onClick={() => setShowImportModal(true)}>
+              <Download size={15} /> Importer fra fotball.no
             </Button>
-
-            {importError && (
-              <div className="flex items-start gap-2 text-red-400 text-sm bg-red-950/40 border border-red-800/50 rounded-lg px-3 py-2">
-                <AlertCircle size={15} className="shrink-0 mt-0.5" />
-                <span>{importError}</span>
-              </div>
-            )}
-            {importSuccess && (
-              <div className="flex items-start gap-2 text-emerald-400 text-sm bg-emerald-950/40 border border-emerald-800/50 rounded-lg px-3 py-2">
-                <CheckCircle2 size={15} className="shrink-0 mt-0.5" />
-                <span>{importSuccess}</span>
-              </div>
-            )}
           </div>
+
+          {showImportModal && (
+            <ImportMatchesModal
+              onClose={() => setShowImportModal(false)}
+              onImport={(matches, teamName) => {
+                handleCalendarImport(matches, teamName);
+                setShowImportModal(false);
+              }}
+            />
+          )}
         </div>
       </div>
     );
