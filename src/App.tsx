@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Analytics } from '@vercel/analytics/react';
+import { IosInstallBanner } from '@/components/IosInstallBanner';
 import { Users, Trophy, Settings, Plus, Trash2, Download } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { TeamSetup } from '@/components/TeamSetup';
@@ -357,6 +358,7 @@ export default function App() {
         )}
       </main>
     <Analytics />
+    <IosInstallBanner />
     </div>
   );
 }
