@@ -46,22 +46,13 @@ export function IosInstallBanner() {
 
         {/* Text */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-slate-100 leading-snug">
+          <p className="text-[13px] font-semibold text-slate-100 leading-tight">
             iPhone-tips: Legg til som app på Hjem-skjerm
           </p>
-          <ol className="mt-1 space-y-0.5 list-none p-0 m-0">
-            <li className="text-xs text-slate-400 leading-snug">
-              <span className="font-semibold text-slate-300">1. </span>
-              Trykk <strong className="text-slate-200">Del</strong>{' '}
-              <Share size={11} className="inline mb-0.5 text-slate-300" />
-              {' '}nederst i Safari
-            </li>
-            <li className="text-xs text-slate-400 leading-snug">
-              <span className="font-semibold text-slate-300">2. </span>
-              Scroll ned og trykk{' '}
-              <PlusSquare size={11} className="inline mb-0.5 text-slate-300" />{' '}
-              <strong className="text-slate-200">«Legg til på Hjem-skjerm»</strong>
-            </li>
+          <ol className="text-[12px] text-slate-400 mt-1 leading-snug space-y-0.5 list-none p-0 m-0">
+            <li><span className="font-medium text-slate-200">1.</span> Trykk <span className="font-medium text-slate-200">«···»</span> nederst til høyre i Safari</li>
+            <li><span className="font-medium text-slate-200">2.</span> Velg <span className="font-medium text-slate-200">Del</span> <Share className="h-3 w-3 inline align-middle -translate-y-[2px] mx-0.5" strokeWidth={2.5} /></li>
+            <li><span className="font-medium text-slate-200">3.</span> Scroll ned og trykk <PlusSquare className="h-3 w-3 inline align-middle -translate-y-[2px] mx-0.5" strokeWidth={2.5} /><span className="font-medium text-slate-200">«Legg til på Hjem-skjerm»</span></li>
           </ol>
         </div>
 
