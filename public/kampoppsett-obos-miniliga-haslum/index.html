@@ -126,7 +126,9 @@ function teamAlreadyAdded(name){
 function addTeamToApp(teamDef){
   const raw=loadAppState();
   const state=raw||{teams:[],activeTeamId:null,matches:[],defaultSettings:DEFAULT_SETTINGS};
-  const settings={...DEFAULT_SETTINGS,...(state.defaultSettings||{})};
+  const settings={...DEFAULT_SETTINGS};
+  state.defaultSettings=settings;
+  state.selectedPreset='3er';
   const teamId=genId();
   const players=teamDef.players.map(full=>({id:genId(),name:full.trim().split(' ')[0]}));
   const team={id:teamId,name:teamDef.name,players};
@@ -141,7 +143,7 @@ function addTeamToApp(teamDef){
     matchPlayers:players.map((p,i)=>({playerId:p.id,fieldSeconds:0,benchSeconds:0,keeperSeconds:0,lastEventTime:0,onField:i<settings.playersOnField,lineupOrder:i})),
     elapsedSeconds:0,substitutions:[],
     subQueue:buildSubQueue(players.map((p,i)=>({playerId:p.id,fieldSeconds:0,benchSeconds:0,lastEventTime:0,onField:i<settings.playersOnField,lineupOrder:i})),settings.subInterval*60,(settings.firstSubTime??0)*60),
-    preset:state.selectedPreset
+    preset:'3er'
   }));
   state.teams.push(team);
   state.matches.push(...matches);
