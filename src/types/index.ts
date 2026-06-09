@@ -56,12 +56,15 @@ export interface Match {
   keeperId?: string;
   keeperSince?: number;
   preset?: PresetKey;
+  formation?: Formation5er;
   substitutions: SubstitutionEvent[];
   subQueue: { outId: string; inId: string; dueTime: number }[];
   result?: MatchResult;
 }
 
 export type PresetKey = '3er' | '5er';
+
+export type Formation5er = '1-2-1' | '2-2' | '2-1-1';
 
 export interface AppState {
   teams: Team[];

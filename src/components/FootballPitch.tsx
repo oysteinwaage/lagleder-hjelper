@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { formatTime } from '@/lib/utils';
-import type { Match, Team } from '@/types';
+import type { Formation5er, Match, Team } from '@/types';
 
 interface Props {
   match: Match;
@@ -9,6 +9,7 @@ interface Props {
   enterBenchId: string | null;
   currentTime: number;
   keeperId?: string;
+  formation?: Formation5er;
   onSwapPositions?: (idA: string, idB: string) => void;
 }
 
@@ -68,7 +69,37 @@ const TOTAL_W = W + BENCH_W;
 
 const KEEPER_POS = { x: 0.5, y: 226 / H_FIELD };
 
-function getOutfieldPositions(count: number): { x: number; y: number }[] {
+// Zone y-values (shared across all 5er formations)
+const Y_FRONT  = 34 / H_FIELD;
+const Y_MID    = 98 / H_FIELD;
+const Y_BACK   = 162 / H_FIELD;
+
+const FORMATION_POSITIONS: Record<Formation5er, { x: number; y: number }[]> = {
+  '1-2-1': [
+    { x: 0.5,  y: Y_FRONT },  // spiss
+    { x: 0.22, y: Y_MID   },  // venstre ving
+    { x: 0.78, y: Y_MID   },  // høyre ving
+    { x: 0.5,  y: Y_BACK  },  // back
+  ],
+  '2-2': [
+    { x: 0.28, y: Y_FRONT },  // venstre forran
+    { x: 0.72, y: Y_FRONT },  // høyre forran
+    { x: 0.28, y: Y_BACK  },  // venstre bak
+    { x: 0.72, y: Y_BACK  },  // høyre bak
+  ],
+  '2-1-1': [
+    { x: 0.5,  y: Y_FRONT },  // spiss
+    { x: 0.5,  y: Y_MID   },  // sentral midtbane
+    { x: 0.28, y: Y_BACK  },  // venstre back
+    { x: 0.72, y: Y_BACK  },  // høyre back
+  ],
+};
+
+function getOutfieldPositions(count: number, formation?: Formation5er): { x: number; y: number }[] {
+  if (count === 4 && formation && formation !== '1-2-1') {
+    return FORMATION_POSITIONS[formation];
+  }
+  if (count === 4) return FORMATION_POSITIONS['1-2-1'];
   if (count === 1) return [{ x: 0.5, y: 100 / H_FIELD }];
   if (count === 2) return [
     { x: 0.5, y: 60 / H_FIELD },
@@ -79,13 +110,6 @@ function getOutfieldPositions(count: number): { x: number; y: number }[] {
     { x: 0.25, y: 120 / H_FIELD },
     { x: 0.75, y: 120 / H_FIELD },
   ];
-  // 1-2-1: spiss, venstre ving, høyre ving, back
-  if (count === 4) return [
-    { x: 0.5,  y: 34 / H_FIELD  },
-    { x: 0.22, y: 98 / H_FIELD  },
-    { x: 0.78, y: 98 / H_FIELD  },
-    { x: 0.5,  y: 162 / H_FIELD },
-  ];
   return getPositions(count);
 }
 
@@ -95,7 +119,7 @@ interface DragState {
   svgY: number;
 }
 
-export function FootballPitch({ match, team, enterFieldId, enterBenchId, currentTime, keeperId, onSwapPositions }: Props) {
+export function FootballPitch({ match, team, enterFieldId, enterBenchId, currentTime, keeperId, formation, onSwapPositions }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [hoverTargetId, setHoverTargetId] = useState<string | null>(null);
@@ -113,7 +137,7 @@ export function FootballPitch({ match, team, enterFieldId, enterBenchId, current
     ? fieldPlayers.filter((mp) => mp.playerId !== keeperId)
     : fieldPlayers;
   const outfieldPositions = keeperMp
-    ? getOutfieldPositions(outfieldPlayers.length)
+    ? getOutfieldPositions(outfieldPlayers.length, formation)
     : getPositions(outfieldPlayers.length);
 
   const N = benchPlayers.length;

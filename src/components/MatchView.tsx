@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
-import { Play, Square, Pause, ArrowLeft, Trash2, UserPlus, Shield, ArrowDown, ArrowUp, Pencil } from 'lucide-react';
+import { Play, Square, Pause, ArrowLeft, Trash2, UserPlus, Shield, ArrowDown, ArrowUp, Pencil, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { FootballPitch } from '@/components/FootballPitch';
 import { SubstitutionPanel } from '@/components/SubstitutionPanel';
 import { LineupEditor } from '@/components/LineupEditor';
 import { formatTime, formatDate, applySubstitution, buildSubQueue, applyKeeperChange } from '@/lib/utils';
-import type { Match, MatchPlayer, MatchResult, Player, Team } from '@/types';
+import type { Formation5er, Match, MatchPlayer, MatchResult, Player, Team } from '@/types';
 
 interface Props {
   match: Match;
@@ -291,6 +291,13 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
           }),
         };
       });
+    },
+    [onUpdateMatch]
+  );
+
+  const handleSetFormation = useCallback(
+    (f: Formation5er) => {
+      onUpdateMatch((m) => ({ ...m, formation: f }));
     },
     [onUpdateMatch]
   );
@@ -680,7 +687,38 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
       {/* Active/Completed */}
       {(isActive || isCompleted) && (
         <div className="space-y-4">
-          {isActive && <FootballPitch match={match} team={team} enterFieldId={enterFieldId} enterBenchId={enterBenchId} currentTime={currentTime} keeperId={match.keeperId} onSwapPositions={handleSwapPositions} />}
+          {isActive && (
+            <div className="space-y-2">
+              <FootballPitch
+                match={match}
+                team={team}
+                enterFieldId={enterFieldId}
+                enterBenchId={enterBenchId}
+                currentTime={currentTime}
+                keeperId={match.keeperId}
+                formation={match.formation}
+                onSwapPositions={handleSwapPositions}
+              />
+              {match.preset === '5er' && (
+                <div className="flex items-center gap-2 justify-center">
+                  <LayoutGrid size={13} className="text-slate-500 shrink-0" />
+                  {(['1-2-1', '2-2', '2-1-1'] as Formation5er[]).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => handleSetFormation(f)}
+                      className={`px-3 py-1 rounded-full text-xs font-mono font-semibold transition-colors border ${
+                        (match.formation ?? '1-2-1') === f
+                          ? 'bg-emerald-700 border-emerald-500 text-white'
+                          : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Completed: result card */}
           {isCompleted && (
