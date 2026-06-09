@@ -79,7 +79,20 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
   const currentTime = getLiveTime(match);
 
   const startMatch = useCallback(() => {
-    onUpdateMatch((m) => ({ ...m, status: 'active', startedAt: Date.now() }));
+    onUpdateMatch((m) => {
+      const syncedPlayers = m.matchPlayers.map((mp) => ({
+        ...mp,
+        onField: mp.lineupOrder < m.settings.playersOnField,
+      }));
+      const newSubQueue = buildSubQueue(
+        syncedPlayers,
+        0,
+        m.settings.subInterval * 60,
+        (m.settings.firstSubTime ?? 0) * 60,
+        m.keeperId
+      );
+      return { ...m, status: 'active', startedAt: Date.now(), matchPlayers: syncedPlayers, subQueue: newSubQueue };
+    });
   }, [onUpdateMatch]);
 
   const pauseForHalftime = useCallback(() => {
@@ -177,10 +190,13 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
 
         if (playerId !== undefined) {
           const newKeeperEntry = m.matchPlayers.find((mp) => mp.playerId === playerId);
-          if (newKeeperEntry && !newKeeperEntry.onField) {
+          const isStarter = newKeeperEntry
+            ? newKeeperEntry.lineupOrder < m.settings.playersOnField
+            : false;
+          if (newKeeperEntry && !isStarter) {
             // Keeper is on bench — swap with the last starter so field count stays correct
             const lastStarter = [...m.matchPlayers]
-              .filter((mp) => mp.onField)
+              .filter((mp) => mp.lineupOrder < m.settings.playersOnField)
               .sort((a, b) => b.lineupOrder - a.lineupOrder)[0];
             if (lastStarter) {
               const keeperOrder = newKeeperEntry.lineupOrder;
