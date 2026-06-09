@@ -672,16 +672,48 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
 
       {/* Pending: Lineup editor with add/remove */}
       {isPending && (
-        <LineupEditor
-          match={match}
-          team={team}
-          keeperId={match.keeperId}
-          onSetKeeper={match.preset === '5er' ? handleSetKeeper : undefined}
-          keeperRequired={match.preset === '5er' ? keeperRequiredError && !match.keeperId : false}
-          onUpdateOrder={handleUpdateLineup}
-          onRemoveFromMatch={handleRemoveFromMatch}
-          onAddToMatch={handleAddToMatch}
-        />
+        <div className="space-y-4">
+          <LineupEditor
+            match={match}
+            team={team}
+            keeperId={match.keeperId}
+            onSetKeeper={match.preset === '5er' ? handleSetKeeper : undefined}
+            keeperRequired={match.preset === '5er' ? keeperRequiredError && !match.keeperId : false}
+            onUpdateOrder={handleUpdateLineup}
+            onRemoveFromMatch={handleRemoveFromMatch}
+            onAddToMatch={handleAddToMatch}
+          />
+          {match.preset === '5er' && match.matchPlayers.some((mp) => mp.onField) && (
+            <div className="space-y-2">
+              <FootballPitch
+                match={match}
+                team={team}
+                enterFieldId={null}
+                enterBenchId={null}
+                currentTime={0}
+                keeperId={match.keeperId}
+                formation={match.formation}
+                onSwapPositions={handleSwapPositions}
+              />
+              <div className="flex items-center gap-2 justify-center">
+                <LayoutGrid size={13} className="text-slate-500 shrink-0" />
+                {(['1-2-1', '2-2', '2-1-1'] as Formation5er[]).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => handleSetFormation(f)}
+                    className={`px-3 py-1 rounded-full text-xs font-mono font-semibold transition-colors border ${
+                      (match.formation ?? '1-2-1') === f
+                        ? 'bg-emerald-700 border-emerald-500 text-white'
+                        : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Active/Completed */}
