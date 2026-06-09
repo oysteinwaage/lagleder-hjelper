@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react';
 import { formatTime } from '@/lib/utils';
 import type { Match, Team } from '@/types';
 
@@ -8,6 +9,7 @@ interface Props {
   enterBenchId: string | null;
   currentTime: number;
   keeperId?: string;
+  onSwapPositions?: (idA: string, idB: string) => void;
 }
 
 function getPositions(count: number): { x: number; y: number }[] {
@@ -64,12 +66,8 @@ const BENCH_W = 72;
 const BENCH_CX = W + BENCH_W / 2;
 const TOTAL_W = W + BENCH_W;
 
-// Positions calculated so every player label fits within H_FIELD with 2px gaps between players.
-// Each player element spans 62px (head-top at center−24, label-bottom at center+38).
-// Working up from keeper: 226 → 162 → 98 → 34 (spacing 64px = 62 + 2px gap each).
 const KEEPER_POS = { x: 0.5, y: 226 / H_FIELD };
 
-// Outfield positions when a keeper holds the bottom goal area — 1-2-1 for 4 players
 function getOutfieldPositions(count: number): { x: number; y: number }[] {
   if (count === 1) return [{ x: 0.5, y: 100 / H_FIELD }];
   if (count === 2) return [
@@ -83,15 +81,25 @@ function getOutfieldPositions(count: number): { x: number; y: number }[] {
   ];
   // 1-2-1: spiss, venstre ving, høyre ving, back
   if (count === 4) return [
-    { x: 0.5,  y: 34 / H_FIELD  },  // spiss
-    { x: 0.22, y: 98 / H_FIELD  },  // venstre ving
-    { x: 0.78, y: 98 / H_FIELD  },  // høyre ving
-    { x: 0.5,  y: 162 / H_FIELD },  // back
+    { x: 0.5,  y: 34 / H_FIELD  },
+    { x: 0.22, y: 98 / H_FIELD  },
+    { x: 0.78, y: 98 / H_FIELD  },
+    { x: 0.5,  y: 162 / H_FIELD },
   ];
   return getPositions(count);
 }
 
-export function FootballPitch({ match, team, enterFieldId, enterBenchId, currentTime, keeperId }: Props) {
+interface DragState {
+  playerId: string;
+  svgX: number;
+  svgY: number;
+}
+
+export function FootballPitch({ match, team, enterFieldId, enterBenchId, currentTime, keeperId, onSwapPositions }: Props) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [drag, setDrag] = useState<DragState | null>(null);
+  const [hoverTargetId, setHoverTargetId] = useState<string | null>(null);
+
   const fieldPlayers = match.matchPlayers
     .filter((mp) => mp.onField)
     .sort((a, b) => a.lineupOrder - b.lineupOrder);
@@ -100,7 +108,6 @@ export function FootballPitch({ match, team, enterFieldId, enterBenchId, current
     .filter((mp) => !mp.onField)
     .sort((a, b) => a.lineupOrder - b.lineupOrder);
 
-  // Separate keeper from outfield players when keeperId is set
   const keeperMp = keeperId ? fieldPlayers.find((mp) => mp.playerId === keeperId) : undefined;
   const outfieldPlayers = keeperMp
     ? fieldPlayers.filter((mp) => mp.playerId !== keeperId)
@@ -120,7 +127,56 @@ export function FootballPitch({ match, team, enterFieldId, enterBenchId, current
     return team.players.find((p) => p.id === id)?.name ?? '?';
   }
 
-  // Swap animation — now goes from field (left) to bench panel (right)
+  function toSvgCoords(clientX: number, clientY: number) {
+    const el = svgRef.current;
+    if (!el) return { x: 0, y: 0 };
+    const rect = el.getBoundingClientRect();
+    return {
+      x: ((clientX - rect.left) / rect.width) * TOTAL_W,
+      y: ((clientY - rect.top) / rect.height) * H_FIELD,
+    };
+  }
+
+  function findClosestOutfield(svgX: number, svgY: number, excludeId: string): string | null {
+    const THRESHOLD = 32;
+    let closest: string | null = null;
+    let minDist = THRESHOLD;
+    outfieldPlayers.forEach((mp, i) => {
+      if (mp.playerId === excludeId) return;
+      const px = outfieldPositions[i].x * W;
+      const py = outfieldPositions[i].y * H_FIELD;
+      const d = Math.sqrt((svgX - px) ** 2 + (svgY - py) ** 2);
+      if (d < minDist) { minDist = d; closest = mp.playerId; }
+    });
+    return closest;
+  }
+
+  function handlePointerDown(e: React.PointerEvent<SVGGElement>, playerId: string) {
+    if (!onSwapPositions) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const { x, y } = toSvgCoords(e.clientX, e.clientY);
+    setDrag({ playerId, svgX: x, svgY: y });
+    setHoverTargetId(null);
+    e.stopPropagation();
+  }
+
+  function handlePointerMove(e: React.PointerEvent<SVGGElement>) {
+    if (!drag || drag.playerId !== e.currentTarget.dataset.playerid) return;
+    const { x, y } = toSvgCoords(e.clientX, e.clientY);
+    setDrag({ ...drag, svgX: x, svgY: y });
+    setHoverTargetId(findClosestOutfield(x, y, drag.playerId));
+  }
+
+  function handlePointerUp(e: React.PointerEvent<SVGGElement>) {
+    if (!drag || drag.playerId !== e.currentTarget.dataset.playerid) return;
+    if (hoverTargetId && onSwapPositions) {
+      onSwapPositions(drag.playerId, hoverTargetId);
+    }
+    setDrag(null);
+    setHoverTargetId(null);
+  }
+
+  // Swap animation
   let swapFx = 0, swapFy = 0, swapBx = BENCH_CX, swapBy = 0;
   let showSwapLine = false;
   if (enterFieldId && enterBenchId) {
@@ -141,13 +197,17 @@ export function FootballPitch({ match, team, enterFieldId, enterBenchId, current
   const px = (dy / lineLen) * 4;
   const py = -(dx / lineLen) * 4;
 
+  const isDragging = !!drag;
+
   return (
     <div className="flex justify-center">
       <svg
+        ref={svgRef}
         viewBox={`0 0 ${TOTAL_W} ${H_FIELD}`}
         width={TOTAL_W}
         height={H_FIELD}
         className="rounded-xl overflow-hidden max-w-full"
+        style={isDragging ? { cursor: 'grabbing', touchAction: 'none' } : undefined}
       >
         <defs>
           <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1">
@@ -202,12 +262,28 @@ export function FootballPitch({ match, team, enterFieldId, enterBenchId, current
           const x = pos.x * W;
           const y = pos.y * H_FIELD;
           const isEntering = mp.playerId === enterFieldId;
+          const isBeingDragged = drag?.playerId === mp.playerId;
+          const isDropTarget = hoverTargetId === mp.playerId;
           const name = getPlayerName(mp.playerId);
           const displayName = name.length > 10 ? name.slice(0, 9) + '…' : name;
           const spellSeconds = currentTime - mp.lastEventTime;
+          const canDrag = !!onSwapPositions;
 
           return (
-            <g key={mp.playerId} transform={`translate(${x}, ${y})`}>
+            <g
+              key={mp.playerId}
+              transform={`translate(${x}, ${y})`}
+              data-playerid={mp.playerId}
+              onPointerDown={canDrag ? (e) => handlePointerDown(e, mp.playerId) : undefined}
+              onPointerMove={canDrag && isBeingDragged ? handlePointerMove : undefined}
+              onPointerUp={canDrag && isBeingDragged ? handlePointerUp : undefined}
+              style={canDrag ? { cursor: isBeingDragged ? 'grabbing' : 'grab', touchAction: 'none' } : undefined}
+              opacity={isBeingDragged ? 0.35 : 1}
+            >
+              {/* Drop target highlight ring */}
+              {isDropTarget && (
+                <circle r={18} fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.7)" strokeWidth={2} strokeDasharray="4 3" />
+              )}
               {isEntering && (
                 <>
                   <circle r={14} fill="rgba(34,205,94,0.18)" className="svg-ring-fill" />
@@ -231,6 +307,28 @@ export function FootballPitch({ match, team, enterFieldId, enterBenchId, current
             </g>
           );
         })}
+
+        {/* Ghost — follows cursor while dragging */}
+        {drag && (() => {
+          const draggedIdx = outfieldPlayers.findIndex((mp) => mp.playerId === drag.playerId);
+          if (draggedIdx < 0) return null;
+          const name = getPlayerName(drag.playerId);
+          const displayName = name.length > 10 ? name.slice(0, 9) + '…' : name;
+          return (
+            <g transform={`translate(${drag.svgX}, ${drag.svgY})`} style={{ pointerEvents: 'none' }}>
+              <circle r={15} fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.6)" strokeWidth={2} />
+              <ellipse cx={0} cy={14} rx={11} ry={4} fill="rgba(0,0,0,0.15)" />
+              <circle r={12} fill="#1d4ed8" stroke="white" strokeWidth={2} opacity={0.9} />
+              <line x1={-6} y1={-4} x2={-6} y2={8} stroke="rgba(255,255,255,0.4)" strokeWidth={1.5} />
+              <line x1={6} y1={-4} x2={6} y2={8} stroke="rgba(255,255,255,0.4)" strokeWidth={1.5} />
+              <circle cx={0} cy={-16} r={8} fill="#f5c89a" stroke="white" strokeWidth={1.5} />
+              <rect x={-26} y={16} width={52} height={22} rx={3} fill="rgba(0,0,0,0.85)" />
+              <text x={0} y={26} textAnchor="middle" fill="white" fontSize={8} fontFamily="system-ui, sans-serif" fontWeight="600">
+                {displayName}
+              </text>
+            </g>
+          );
+        })()}
 
         {/* Keeper — fixed at bottom goal area */}
         {keeperMp && (() => {

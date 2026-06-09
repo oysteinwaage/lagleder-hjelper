@@ -274,6 +274,27 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
     [onUpdateMatch]
   );
 
+  const handleSwapPositions = useCallback(
+    (idA: string, idB: string) => {
+      onUpdateMatch((m) => {
+        const mpA = m.matchPlayers.find((mp) => mp.playerId === idA);
+        const mpB = m.matchPlayers.find((mp) => mp.playerId === idB);
+        if (!mpA || !mpB) return m;
+        const orderA = mpA.lineupOrder;
+        const orderB = mpB.lineupOrder;
+        return {
+          ...m,
+          matchPlayers: m.matchPlayers.map((mp) => {
+            if (mp.playerId === idA) return { ...mp, lineupOrder: orderB };
+            if (mp.playerId === idB) return { ...mp, lineupOrder: orderA };
+            return mp;
+          }),
+        };
+      });
+    },
+    [onUpdateMatch]
+  );
+
   const handleRemoveFromMatch = useCallback(
     (playerId: string) => {
       const now = getLiveTime(match);
@@ -659,7 +680,7 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
       {/* Active/Completed */}
       {(isActive || isCompleted) && (
         <div className="space-y-4">
-          {isActive && <FootballPitch match={match} team={team} enterFieldId={enterFieldId} enterBenchId={enterBenchId} currentTime={currentTime} keeperId={match.keeperId} />}
+          {isActive && <FootballPitch match={match} team={team} enterFieldId={enterFieldId} enterBenchId={enterBenchId} currentTime={currentTime} keeperId={match.keeperId} onSwapPositions={handleSwapPositions} />}
 
           {/* Completed: result card */}
           {isCompleted && (
