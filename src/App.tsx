@@ -84,6 +84,13 @@ export default function App() {
             <span>🏆</span> OBOS Miniliga – kampoppsett Ready 2026
           </a>
 
+          <a
+            href="/kampoppsett-obos-miniliga-haslum"
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-[#003087] hover:bg-[#002070] text-white text-sm font-medium transition-colors"
+          >
+            <span>🏆</span> OBOS Miniliga – kampoppsett Haslum 2026
+          </a>
+
           {/* Manual team creation */}
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
             <p className="text-sm text-slate-400 mb-3">Opprett ditt første lag</p>
@@ -211,7 +218,7 @@ export default function App() {
             <Settings size={16} /> Admin
           </button>
           <a
-            href="/kampoppsett-obos-miniliga-roa"
+            href="/kampoppsett-obos-miniliga-haslum"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-[#5b8fd4] hover:text-white hover:bg-[#003087] transition-colors"
           >
             🏆 OBOS
