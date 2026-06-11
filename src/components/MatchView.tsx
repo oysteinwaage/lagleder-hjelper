@@ -331,13 +331,16 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
       const now = getLiveTime(match);
       onUpdateMatch((m) => {
         const maxOrder = m.matchPlayers.reduce((max, mp) => Math.max(max, mp.lineupOrder), -1);
+        const newOrder = maxOrder + 1;
+        // Before kickoff, fill an open field slot so the pitch reflects the lineup immediately.
+        const onField = m.status === 'pending' && newOrder < m.settings.playersOnField;
         const newEntry: MatchPlayer = {
           playerId: player.id,
           fieldSeconds: 0,
           benchSeconds: 0,
           lastEventTime: now,
-          onField: false,
-          lineupOrder: maxOrder + 1,
+          onField,
+          lineupOrder: newOrder,
         };
         const newPlayers = [...m.matchPlayers, newEntry];
         const newSubQueue = buildSubQueue(
