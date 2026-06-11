@@ -7,7 +7,7 @@ import { FootballPitch } from '@/components/FootballPitch';
 import { SubstitutionPanel } from '@/components/SubstitutionPanel';
 import { LineupEditor } from '@/components/LineupEditor';
 import { formatTime, formatDate, applySubstitution, buildSubQueue, applyKeeperChange } from '@/lib/utils';
-import type { Formation5er, Match, MatchPlayer, MatchResult, Player, Team } from '@/types';
+import type { Formation5er, Formation7er, Match, MatchPlayer, MatchResult, Player, Team } from '@/types';
 
 interface Props {
   match: Match;
@@ -296,7 +296,7 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
   );
 
   const handleSetFormation = useCallback(
-    (f: Formation5er) => {
+    (f: Formation5er | Formation7er) => {
       onUpdateMatch((m) => ({ ...m, formation: f }));
     },
     [onUpdateMatch]
@@ -419,7 +419,7 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
             size="lg"
             className="w-full"
             onClick={() => {
-              if (match.preset === '5er' && !match.keeperId) {
+              if ((match.preset === '5er' || match.preset === '7er') && !match.keeperId) {
                 setKeeperRequiredError(true);
                 return;
               }
@@ -657,7 +657,7 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
               size="lg"
               className="w-full"
               onClick={() => {
-                if (match.preset === '5er' && !match.keeperId) {
+                if ((match.preset === '5er' || match.preset === '7er') && !match.keeperId) {
                   setKeeperRequiredError(true);
                   return;
                 }
@@ -677,13 +677,13 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
             match={match}
             team={team}
             keeperId={match.keeperId}
-            onSetKeeper={match.preset === '5er' ? handleSetKeeper : undefined}
-            keeperRequired={match.preset === '5er' ? keeperRequiredError && !match.keeperId : false}
+            onSetKeeper={(match.preset === '5er' || match.preset === '7er') ? handleSetKeeper : undefined}
+            keeperRequired={(match.preset === '5er' || match.preset === '7er') ? keeperRequiredError && !match.keeperId : false}
             onUpdateOrder={handleUpdateLineup}
             onRemoveFromMatch={handleRemoveFromMatch}
             onAddToMatch={handleAddToMatch}
           />
-          {match.preset === '5er' && match.matchPlayers.some((mp) => mp.onField) && (
+          {(match.preset === '5er' || match.preset === '7er') && match.matchPlayers.some((mp) => mp.onField) && (
             <div className="space-y-2">
               <FootballPitch
                 match={match}
@@ -697,19 +697,33 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
               />
               <div className="flex items-center gap-2 justify-center">
                 <LayoutGrid size={13} className="text-slate-500 shrink-0" />
-                {(['1-2-1', '2-2', '2-1-1'] as Formation5er[]).map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => handleSetFormation(f)}
-                    className={`px-3 py-1 rounded-full text-xs font-mono font-semibold transition-colors border ${
-                      (match.formation ?? '1-2-1') === f
-                        ? 'bg-emerald-700 border-emerald-500 text-white'
-                        : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {f}
-                  </button>
-                ))}
+                {match.preset === '7er'
+                  ? (['2-3-1', '3-2-1', '2-2-2'] as Formation7er[]).map((f) => (
+                      <button
+                        key={f}
+                        onClick={() => handleSetFormation(f)}
+                        className={`px-3 py-1 rounded-full text-xs font-mono font-semibold transition-colors border ${
+                          (match.formation ?? '2-3-1') === f
+                            ? 'bg-emerald-700 border-emerald-500 text-white'
+                            : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        {f}
+                      </button>
+                    ))
+                  : (['1-2-1', '2-2', '2-1-1'] as Formation5er[]).map((f) => (
+                      <button
+                        key={f}
+                        onClick={() => handleSetFormation(f)}
+                        className={`px-3 py-1 rounded-full text-xs font-mono font-semibold transition-colors border ${
+                          (match.formation ?? '1-2-1') === f
+                            ? 'bg-emerald-700 border-emerald-500 text-white'
+                            : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        {f}
+                      </button>
+                    ))}
               </div>
             </div>
           )}
@@ -731,22 +745,36 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
                 formation={match.formation}
                 onSwapPositions={handleSwapPositions}
               />
-              {match.preset === '5er' && (
+              {(match.preset === '5er' || match.preset === '7er') && (
                 <div className="flex items-center gap-2 justify-center">
                   <LayoutGrid size={13} className="text-slate-500 shrink-0" />
-                  {(['1-2-1', '2-2', '2-1-1'] as Formation5er[]).map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => handleSetFormation(f)}
-                      className={`px-3 py-1 rounded-full text-xs font-mono font-semibold transition-colors border ${
-                        (match.formation ?? '1-2-1') === f
-                          ? 'bg-emerald-700 border-emerald-500 text-white'
-                          : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      {f}
-                    </button>
-                  ))}
+                  {match.preset === '7er'
+                    ? (['2-3-1', '3-2-1', '2-2-2'] as Formation7er[]).map((f) => (
+                        <button
+                          key={f}
+                          onClick={() => handleSetFormation(f)}
+                          className={`px-3 py-1 rounded-full text-xs font-mono font-semibold transition-colors border ${
+                            (match.formation ?? '2-3-1') === f
+                              ? 'bg-emerald-700 border-emerald-500 text-white'
+                              : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          {f}
+                        </button>
+                      ))
+                    : (['1-2-1', '2-2', '2-1-1'] as Formation5er[]).map((f) => (
+                        <button
+                          key={f}
+                          onClick={() => handleSetFormation(f)}
+                          className={`px-3 py-1 rounded-full text-xs font-mono font-semibold transition-colors border ${
+                            (match.formation ?? '1-2-1') === f
+                              ? 'bg-emerald-700 border-emerald-500 text-white'
+                              : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          {f}
+                        </button>
+                      ))}
                 </div>
               )}
             </div>
@@ -797,8 +825,8 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
             <Card>
               <CardContent className="pt-4">
                 {(() => {
-                  const is5er = match.preset === '5er';
-                  const hasAnyKeeper = is5er && match.matchPlayers.some((mp) => (mp.keeperSeconds ?? 0) > 0);
+                  const hasKeeper = match.preset === '5er' || match.preset === '7er';
+                  const hasAnyKeeper = hasKeeper && match.matchPlayers.some((mp) => (mp.keeperSeconds ?? 0) > 0);
                   return (
                     <>
                       <div className="flex items-center justify-between mb-3">
@@ -826,7 +854,7 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
                           .map((mp) => {
                             const name = getPlayerName(mp.playerId);
                             const fieldSecs = mp.fieldSeconds;
-                            const keeperSecs = is5er ? (mp.keeperSeconds ?? 0) : 0;
+                            const keeperSecs = hasKeeper ? (mp.keeperSeconds ?? 0) : 0;
                             const ref = match.elapsedSeconds > 0 ? match.elapsedSeconds : 1;
                             const fieldPct = (fieldSecs / ref) * 100;
                             const keeperPct = (keeperSecs / ref) * 100;
@@ -899,8 +927,8 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
             />
           )}
 
-          {/* Keeper module — only for 5er matches */}
-          {isActive && match.preset === '5er' && (
+          {/* Keeper module — only for 5er/7er matches */}
+          {isActive && (match.preset === '5er' || match.preset === '7er') && (
             <Card>
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between mb-3">

@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { formatTime } from '@/lib/utils';
-import type { Formation5er, Match, Team } from '@/types';
+import type { Formation5er, Formation7er, Match, Team } from '@/types';
 
 interface Props {
   match: Match;
@@ -9,7 +9,7 @@ interface Props {
   enterBenchId: string | null;
   currentTime: number;
   keeperId?: string;
-  formation?: Formation5er;
+  formation?: Formation5er | Formation7er;
   onSwapPositions?: (idA: string, idB: string) => void;
 }
 
@@ -95,9 +95,45 @@ const FORMATION_POSITIONS: Record<Formation5er, { x: number; y: number }[]> = {
   ],
 };
 
-function getOutfieldPositions(count: number, formation?: Formation5er): { x: number; y: number }[] {
-  if (count === 4 && formation && formation !== '1-2-1') {
-    return FORMATION_POSITIONS[formation];
+// Zone y-values for 7er formations (6 outfield players)
+const Y7_FRONT = 30 / H_FIELD;
+const Y7_MID   = 95 / H_FIELD;
+const Y7_BACK  = 160 / H_FIELD;
+
+const FORMATION_POSITIONS_7ER: Record<Formation7er, { x: number; y: number }[]> = {
+  '2-3-1': [
+    { x: 0.5,  y: Y7_FRONT },  // spiss
+    { x: 0.2,  y: Y7_MID   },  // venstre ving
+    { x: 0.5,  y: Y7_MID   },  // sentral midtbane
+    { x: 0.8,  y: Y7_MID   },  // høyre ving
+    { x: 0.3,  y: Y7_BACK  },  // venstre back
+    { x: 0.7,  y: Y7_BACK  },  // høyre back
+  ],
+  '3-2-1': [
+    { x: 0.5,  y: Y7_FRONT },  // spiss
+    { x: 0.3,  y: Y7_MID   },  // venstre midtbane
+    { x: 0.7,  y: Y7_MID   },  // høyre midtbane
+    { x: 0.2,  y: Y7_BACK  },  // venstre back
+    { x: 0.5,  y: Y7_BACK  },  // sentral back
+    { x: 0.8,  y: Y7_BACK  },  // høyre back
+  ],
+  '2-2-2': [
+    { x: 0.3,  y: Y7_FRONT },  // venstre spiss
+    { x: 0.7,  y: Y7_FRONT },  // høyre spiss
+    { x: 0.3,  y: Y7_MID   },  // venstre midtbane
+    { x: 0.7,  y: Y7_MID   },  // høyre midtbane
+    { x: 0.3,  y: Y7_BACK  },  // venstre back
+    { x: 0.7,  y: Y7_BACK  },  // høyre back
+  ],
+};
+
+function getOutfieldPositions(count: number, formation?: Formation5er | Formation7er): { x: number; y: number }[] {
+  if (count === 6 && formation && formation in FORMATION_POSITIONS_7ER) {
+    return FORMATION_POSITIONS_7ER[formation as Formation7er];
+  }
+  if (count === 6) return FORMATION_POSITIONS_7ER['2-3-1'];
+  if (count === 4 && formation && formation in FORMATION_POSITIONS && formation !== '1-2-1') {
+    return FORMATION_POSITIONS[formation as Formation5er];
   }
   if (count === 4) return FORMATION_POSITIONS['1-2-1'];
   if (count === 1) return [{ x: 0.5, y: 100 / H_FIELD }];

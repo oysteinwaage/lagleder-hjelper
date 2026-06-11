@@ -16,6 +16,11 @@ export const PRESETS: { key: PresetKey; label: string; values: MatchSettings }[]
     label: '5\'er',
     values: { playersOnField: 5, numberOfHalves: 2, halfDuration: 25, firstSubTime: 3, subInterval: 4 },
   },
+  {
+    key: '7er',
+    label: '7\'er',
+    values: { playersOnField: 7, numberOfHalves: 2, halfDuration: 30, firstSubTime: 5, subInterval: 5 },
+  },
 ];
 
 interface Props {
