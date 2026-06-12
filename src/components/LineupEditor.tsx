@@ -150,7 +150,9 @@ export function LineupEditor({ match, team, playerTimes, keeperId, onSetKeeper, 
         <CardTitle>Oppstilling</CardTitle>
         <p className="text-sm text-slate-400">
           Dra i håndtaket for å endre rekkefølge. De {match.settings.playersOnField} øverste starter.{' '}
-          <span className="inline-flex items-center gap-1">Velg også keeper på <Shield size={13} className="shrink-0" /></span>
+          {(match.preset === '5er' || match.preset === '7er') && (
+            <span className="inline-flex items-center gap-1">Velg også keeper på <Shield size={13} className="shrink-0" /></span>
+          )}
         </p>
         {keeperRequired && (
           <p className="text-xs text-amber-400 font-medium flex items-center gap-1.5 mt-1">
