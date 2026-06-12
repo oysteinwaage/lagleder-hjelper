@@ -141,7 +141,7 @@ export function MatchList({ matches, team, onCreateMatch, onDeleteMatch, onSelec
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="flex items-center gap-2">
               <Trophy className="text-emerald-400" size={20} />
-              Kamper - {team.name}
+              Kamper
             </CardTitle>
             <div className="flex items-center gap-2">
               <Button size="sm" variant="outline" onClick={() => setShowImport(true)}>
