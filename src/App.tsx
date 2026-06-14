@@ -5,6 +5,7 @@ import { Users, Trophy, Settings, Plus, Trash2, Download } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { TeamSetup } from '@/components/TeamSetup';
 import { MatchList } from '@/components/MatchList';
+import { SeasonPlaytime } from '@/components/SeasonPlaytime';
 import { MatchView } from '@/components/MatchView';
 import { AdminSettings } from '@/components/AdminSettings';
 import { ImportMatchesModal } from '@/components/ImportMatchesModal';
@@ -353,6 +354,7 @@ export default function App() {
               onSelectMatch={setActiveMatchId}
               onImportMatches={importMatchesForTeam}
             />
+            <SeasonPlaytime matches={teamMatches} team={activeTeam} />
           </>
         )}
 
