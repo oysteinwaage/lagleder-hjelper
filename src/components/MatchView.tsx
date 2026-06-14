@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
-import { Play, Square, Pause, ArrowLeft, Trash2, UserPlus, Shield, ArrowDown, ArrowUp, Pencil, LayoutGrid } from 'lucide-react';
+import { Play, Square, Pause, ArrowLeft, Trash2, UserPlus, UserMinus, Shield, ArrowDown, ArrowUp, Pencil, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -60,6 +60,8 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
   const [editHome, setEditHome] = useState('');
   const [editAway, setEditAway] = useState('');
   const [showKeeperModal, setShowKeeperModal] = useState(false);
+  const [showAddExtraModal, setShowAddExtraModal] = useState(false);
+  const [showRemovePlayerModal, setShowRemovePlayerModal] = useState(false);
   const [keeperRequiredError, setKeeperRequiredError] = useState(false);
   const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const halftimeUserDraggedRef = useRef(false);
@@ -356,6 +358,80 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
     [match, onUpdateMatch]
   );
 
+  // Put a bench player onto the field as an extra — increases the number on field by one.
+  const handleAddExtraPlayer = useCallback(
+    (playerId: string) => {
+      const now = getLiveTime(match);
+      setEnterFieldId(playerId);
+      if (animTimerRef.current) clearTimeout(animTimerRef.current);
+      animTimerRef.current = setTimeout(() => { setEnterFieldId(null); setEnterBenchId(null); }, 800);
+      onUpdateMatch((m) => {
+        const updated = m.matchPlayers.map((mp): MatchPlayer => {
+          if (mp.playerId !== playerId) return mp;
+          return {
+            ...mp,
+            onField: true,
+            benchSeconds: mp.benchSeconds + (now - mp.lastEventTime),
+            lastEventTime: now,
+          };
+        });
+        const newPlayersOnField = m.settings.playersOnField + 1;
+        const newSubQueue = buildSubQueue(
+          updated,
+          now,
+          m.settings.subInterval * 60,
+          (m.settings.firstSubTime ?? 0) * 60,
+          m.keeperId
+        );
+        return {
+          ...m,
+          settings: { ...m.settings, playersOnField: newPlayersOnField },
+          matchPlayers: updated,
+          subQueue: newSubQueue,
+        };
+      });
+    },
+    [match, onUpdateMatch]
+  );
+
+  // Take a field player off to the bench — decreases the number on field by one.
+  const handleRemovePlayerToBench = useCallback(
+    (playerId: string) => {
+      const now = getLiveTime(match);
+      setEnterBenchId(playerId);
+      if (animTimerRef.current) clearTimeout(animTimerRef.current);
+      animTimerRef.current = setTimeout(() => { setEnterFieldId(null); setEnterBenchId(null); }, 800);
+      onUpdateMatch((m) => {
+        const updated = m.matchPlayers.map((mp): MatchPlayer => {
+          if (mp.playerId !== playerId) return mp;
+          return {
+            ...mp,
+            onField: false,
+            fieldSeconds: mp.playerId !== m.keeperId
+              ? mp.fieldSeconds + (now - mp.lastEventTime)
+              : mp.fieldSeconds,
+            lastEventTime: now,
+          };
+        });
+        const newPlayersOnField = Math.max(1, m.settings.playersOnField - 1);
+        const newSubQueue = buildSubQueue(
+          updated,
+          now,
+          m.settings.subInterval * 60,
+          (m.settings.firstSubTime ?? 0) * 60,
+          m.keeperId
+        );
+        return {
+          ...m,
+          settings: { ...m.settings, playersOnField: newPlayersOnField },
+          matchPlayers: updated,
+          subQueue: newSubQueue,
+        };
+      });
+    },
+    [match, onUpdateMatch]
+  );
+
   const isActive = match.status === 'active';
   const isPending = match.status === 'pending';
   const isCompleted = match.status === 'completed';
@@ -388,6 +464,17 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
   function getTimeOnField(mp: typeof match.matchPlayers[0]) {
     if (mp.onField && isActive) return mp.fieldSeconds + (currentTime - mp.lastEventTime);
     return mp.fieldSeconds;
+  }
+
+  // Current uninterrupted spell since the player last changed state (came on / went off).
+  function getCurrentSpell(mp: typeof match.matchPlayers[0]) {
+    return Math.max(0, currentTime - mp.lastEventTime);
+  }
+
+  // Total accumulated bench time including the ongoing bench spell.
+  function getTotalBench(mp: typeof match.matchPlayers[0]) {
+    if (!mp.onField && isActive) return mp.benchSeconds + (currentTime - mp.lastEventTime);
+    return mp.benchSeconds;
   }
 
   return (
@@ -625,6 +712,89 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
                 ))}
             </div>
             <Button variant="outline" className="w-full" onClick={() => setShowKeeperModal(false)}>
+              Avbryt
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Sett inn ekstra spiller modal */}
+      {showAddExtraModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-sm space-y-4 shadow-xl">
+            <p className="text-slate-100 font-semibold text-lg flex items-center gap-2">
+              <UserPlus size={18} className="text-emerald-400" /> Sett inn ekstra spiller
+            </p>
+            <p className="text-slate-400 text-sm">Velg spiller fra benken som skal settes inn:</p>
+            <div className="space-y-1.5 max-h-72 overflow-y-auto">
+              {benchPlayers.length === 0 && (
+                <p className="text-sm text-slate-500 text-center py-2">Ingen spillere på benken</p>
+              )}
+              {[...benchPlayers]
+                .sort((a, b) => getTotalBench(b) - getTotalBench(a))
+                .map((mp) => (
+                  <button
+                    key={mp.playerId}
+                    onClick={() => { handleAddExtraPlayer(mp.playerId); setShowAddExtraModal(false); }}
+                    className="w-full text-left px-3 py-2 rounded-lg bg-slate-700 hover:bg-emerald-900/50 text-slate-200 hover:text-white border border-slate-600 hover:border-emerald-600 transition-colors flex items-center justify-between gap-2"
+                  >
+                    <span className="text-sm truncate">{getPlayerName(mp.playerId)}</span>
+                    <span className="flex items-center gap-4 shrink-0 text-right">
+                      <span className="flex flex-col leading-tight">
+                        <span className="text-xs font-mono text-slate-300">{formatTime(Math.floor(getCurrentSpell(mp)))}</span>
+                        <span className="text-[10px] text-slate-500">på benken</span>
+                      </span>
+                      <span className="flex flex-col leading-tight">
+                        <span className="text-xs font-mono text-slate-300">{formatTime(Math.floor(getTotalBench(mp)))}</span>
+                        <span className="text-[10px] text-slate-500">totalt</span>
+                      </span>
+                    </span>
+                  </button>
+                ))}
+            </div>
+            <Button variant="outline" className="w-full" onClick={() => setShowAddExtraModal(false)}>
+              Avbryt
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Ta ut spiller modal */}
+      {showRemovePlayerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-sm space-y-4 shadow-xl">
+            <p className="text-slate-100 font-semibold text-lg flex items-center gap-2">
+              <UserMinus size={18} className="text-red-400" /> Ta ut spiller
+            </p>
+            <p className="text-slate-400 text-sm">Velg spiller på banen som skal tas ut:</p>
+            <div className="space-y-1.5 max-h-72 overflow-y-auto">
+              {fieldPlayers.filter((mp) => mp.playerId !== match.keeperId).length === 0 && (
+                <p className="text-sm text-slate-500 text-center py-2">Ingen spillere å ta ut</p>
+              )}
+              {fieldPlayers
+                .filter((mp) => mp.playerId !== match.keeperId)
+                .sort((a, b) => getTimeOnField(b) - getTimeOnField(a))
+                .map((mp) => (
+                  <button
+                    key={mp.playerId}
+                    onClick={() => { handleRemovePlayerToBench(mp.playerId); setShowRemovePlayerModal(false); }}
+                    className="w-full text-left px-3 py-2 rounded-lg bg-slate-700 hover:bg-red-900/50 text-slate-200 hover:text-white border border-slate-600 hover:border-red-700 transition-colors flex items-center justify-between gap-2"
+                  >
+                    <span className="text-sm truncate">{getPlayerName(mp.playerId)}</span>
+                    <span className="flex items-center gap-4 shrink-0 text-right">
+                      <span className="flex flex-col leading-tight">
+                        <span className="text-xs font-mono text-slate-300">{formatTime(Math.floor(getCurrentSpell(mp)))}</span>
+                        <span className="text-[10px] text-slate-500">på banen</span>
+                      </span>
+                      <span className="flex flex-col leading-tight">
+                        <span className="text-xs font-mono text-slate-300">{formatTime(Math.floor(getTimeOnField(mp)))}</span>
+                        <span className="text-[10px] text-slate-500">totalt</span>
+                      </span>
+                    </span>
+                  </button>
+                ))}
+            </div>
+            <Button variant="outline" className="w-full" onClick={() => setShowRemovePlayerModal(false)}>
               Avbryt
             </Button>
           </div>
@@ -978,6 +1148,30 @@ export function MatchView({ match, team, onUpdateMatch, onCompleteMatch, onBack 
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Sett inn / ta ut ekstra spiller — endrer antall på banen */}
+          {isActive && (
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="flex-1"
+                onClick={() => setShowAddExtraModal(true)}
+                disabled={benchPlayers.length === 0}
+              >
+                <UserPlus size={15} /> Sett inn ekstra
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="flex-1"
+                onClick={() => setShowRemovePlayerModal(true)}
+                disabled={fieldPlayers.filter((mp) => mp.playerId !== match.keeperId).length === 0}
+              >
+                <UserMinus size={15} /> Ta ut spiller
+              </Button>
+            </div>
           )}
 
           {/* Spillere (field + bench merged) */}
