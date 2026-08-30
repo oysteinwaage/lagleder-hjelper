@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
-const staticPages = ['/kampoppsett-obos-miniliga-roa', '/kampoppsett-obos-miniliga-haslum'];
+const staticPages = ['/kampoppsett-obos-miniliga-roa', '/kampoppsett-obos-miniliga-haslum', '/kampoppsett-ready-hostcup', '/liverpool-tur'];
 
 export default defineConfig({
   plugins: [

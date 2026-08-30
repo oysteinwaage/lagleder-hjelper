@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Liverpool-tur – mulige kamphelger</title>
+<style>
+  :root{
+    --bg:#fbfaf6;
+    --card:#ffffff;
+    --border:#e8e6df;
+    --text:#1a1a1a;
+    --text-2:#6b6b6b;
+    --text-3:#9a9a9a;
+    --success:#5f8a3a;
+    --danger:#a9543d;
+    --cl-bg:#f4ead2;
+    --cl-text:#856f43;
+    --muted-bg:#ededea;
+    --muted-text:#8a8a86;
+    --radius-card:16px;
+    --radius-badge:6px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:32px 20px 48px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1100px;margin:0 auto}
+  .leg{display:flex;flex-wrap:wrap;align-items:center;gap:20px;margin:0 4px 24px;font-size:14px;color:var(--text-2)}
+  .leg span{display:flex;align-items:center;gap:7px}
+  .leg svg{width:18px;height:18px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+  .mc{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-card);padding:20px 22px}
+  .mh{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+  .mn{font-size:18px;font-weight:600}
+  .mcount{font-size:13px;color:var(--text-3)}
+  .wk{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--border)}
+  .wk:first-of-type{border-top:none}
+  .wk svg{width:20px;height:20px;flex-shrink:0}
+  .ok svg{color:var(--success)}
+  .block{opacity:.65}
+  .block svg{color:var(--danger)}
+  .wb{flex:1;min-width:0}
+  .wd{font-size:15px;font-weight:500}
+  .cl{display:inline-block;margin-top:5px;font-size:12px;padding:3px 9px;border-radius:var(--radius-badge);background:var(--cl-bg);color:var(--cl-text)}
+  .cl.romjul{background:var(--muted-bg);color:var(--muted-text)}
+  .ws{font-size:14px;color:var(--text-2);white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Oversikt over mulige helger for å reise til Liverpool på kamp i oktober–november 2026 og januar–februar 2027, med landslagspauser og FA-cup-helger markert som sperret.</h1>
+
+<div class="leg">
+  <span><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg> Mulig kamphelg</span>
+  <span><svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 10l4 4M14 10l-4 4"/></svg> Sperret</span>
+  <span><span class="cl" style="margin:0">+ CL uka etter</span> kan kombineres med hjemmekamp i CL</span>
+</div>
+
+<div class="grid">
+
+  <div class="mc">
+    <div class="mh"><span class="mn">Oktober 2026</span><span class="mcount">4 av 5 helger</span></div>
+    <div class="wk block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 10l4 4M14 10l-4 4"/></svg><div class="wb"><span class="wd">3.–4. okt</span></div><span class="ws">Landslagspause</span></div>
+    <div class="wk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><div class="wb"><span class="wd">10.–11. okt</span><br><span class="cl">+ CL uka etter (13.–14.)</span></div><span class="ws">Mulig</span></div>
+    <div class="wk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><div class="wb"><span class="wd">17.–18. okt</span><br><span class="cl">+ CL uka etter (20.–21.)</span></div><span class="ws">Mulig</span></div>
+    <div class="wk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><div class="wb"><span class="wd">24.–25. okt</span></div><span class="ws">Mulig</span></div>
+    <div class="wk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><div class="wb"><span class="wd">31. okt–1. nov</span><br><span class="cl">+ CL uka etter (3.–4.)</span></div><span class="ws">Mulig</span></div>
+  </div>
+
+  <div class="mc">
+    <div class="mh"><span class="mn">November 2026</span><span class="mcount">3 av 4 helger</span></div>
+    <div class="wk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><div class="wb"><span class="wd">7.–8. nov</span></div><span class="ws">Mulig</span></div>
+    <div class="wk block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 10l4 4M14 10l-4 4"/></svg><div class="wb"><span class="wd">14.–15. nov</span></div><span class="ws">Landslagspause</span></div>
+    <div class="wk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><div class="wb"><span class="wd">21.–22. nov</span><br><span class="cl">+ CL uka etter (24.–25.)</span></div><span class="ws">Mulig</span></div>
+    <div class="wk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><div class="wb"><span class="wd">28.–29. nov</span></div><span class="ws">Mulig</span></div>
+  </div>
+
+  <div class="mc">
+    <div class="mh"><span class="mn">Januar 2027</span><span class="mcount">4 av 5 helger</span></div>
+    <div class="wk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><div class="wb"><span class="wd">2.–3. jan</span><br><span class="cl romjul">Romjul – kamper kan flyttes</span></div><span class="ws">Mulig</span></div>
+    <div class="wk block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 10l4 4M14 10l-4 4"/></svg><div class="wb"><span class="wd">9.–10. jan</span></div><span class="ws">FA-cup, 3. runde</span></div>
+    <div class="wk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><div class="wb"><span class="wd">16.–17. jan</span><br><span class="cl">+ CL uka etter (19.–20.)</span></div><span class="ws">Mulig</span></div>
+    <div class="wk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><div class="wb"><span class="wd">23.–24. jan</span><br><span class="cl">+ CL uka etter (27.)</span></div><span class="ws">Mulig</span></div>
+    <div class="wk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><div class="wb"><span class="wd">30.–31. jan</span></div><span class="ws">Mulig</span></div>
+  </div>
+
+  <div class="mc">
+    <div class="mh"><span class="mn">Februar 2027</span><span class="mcount">3 av 4 helger</span></div>
+    <div class="wk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><div class="wb"><span class="wd">6.–7. feb</span></div><span class="ws">Mulig</span></div>
+    <div class="wk block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 10l4 4M14 10l-4 4"/></svg><div class="wb"><span class="wd">13.–14. feb</span></div><span class="ws">FA-cup, 4. runde</span></div>
+    <div class="wk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><div class="wb"><span class="wd">20.–21. feb</span><br><span class="cl">+ CL-playoff uka etter (23.–24.)</span></div><span class="ws">Mulig</span></div>
+    <div class="wk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><div class="wb"><span class="wd">27.–28. feb</span></div><span class="ws">Mulig</span></div>
+  </div>
+
+</div>
+</div>
+</body>
+</html>
