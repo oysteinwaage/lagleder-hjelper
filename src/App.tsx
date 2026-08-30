@@ -215,7 +215,7 @@ export default function App() {
             href="/kampoppsett-ready-hostcup"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-[#5b8fd4] hover:text-white hover:bg-[#003087] transition-colors"
           >
-            🏆 Ready høstcup Kampoppsett
+            🏆 Ready høstcup
           </a>
         </div>
       </nav>
