@@ -42,7 +42,7 @@ h1{font-size:18px;font-weight:500;margin-bottom:20px;color:#444}
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
   Tilbake til app
 </a>
-<h1>Ready Høstcup 2026 – VASK 2016-lagene <span style="font-weight:400;color:#aaa">· 6. september 2026</span></h1>
+<h1>Ready Høstcup 2026 – VASK 2016-lagene <span style="font-weight:400;color:#aaa">· Søndag 6. september 2026</span></h1>
 <div class="grid" id="grid"></div>
 <script>
 if(new URLSearchParams(location.search).has('visning'))document.body.classList.add('readonly');
@@ -116,11 +116,6 @@ function addTeamToApp(teamDef){
 }
 
 function ini(n){const p=n.trim().split(" ");return(p[0][0]+(p[p.length-1][0])).toUpperCase()}
-function dayAbbrev(dateStr){
-  const d=new Date(dateStr+'T00:00:00');
-  const weekday=d.toLocaleDateString('nb-NO',{weekday:'short'});
-  return weekday.charAt(0).toUpperCase()+weekday.slice(1).replace('.','');
-}
 const grid=document.getElementById("grid");
 teams.forEach(t=>{
   const res=new Set(t.reserve);
@@ -139,7 +134,7 @@ teams.forEach(t=>{
       <div class="section-label">Spillere (${t.players.length})</div>
       <div>${t.players.map(p=>`<div class="player-row"><div class="avatar" style="background:${t.bg};color:${t.text}">${ini(p)}</div><span class="player-name${res.has(p)?' reserve':''}">${p}</span></div>`).join("")}</div>
       <div class="section-label">Kamper (${t.games.length})</div>
-      <div>${t.games.map(g=>`<div class="game-item"><span class="game-time">⏱ ${dayAbbrev(g.d)} ${g.t}</span><span class="badge ${g.b.startsWith("BINGE")?"binge":"bane"}">${g.b}</span><span class="game-opp">vs ${g.o}</span></div>`).join("")}</div>
+      <div>${t.games.map(g=>`<div class="game-item"><span class="game-time">⏱ ${g.t}</span><span class="badge ${g.b.startsWith("BINGE")?"binge":"bane"}">${g.b}</span><span class="game-opp">vs ${g.o}</span></div>`).join("")}</div>
     </div>`;
   const btn=card.querySelector('.add-btn');
   if(!alreadyAdded){
