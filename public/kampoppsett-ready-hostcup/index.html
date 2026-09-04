@@ -50,16 +50,16 @@ if(new URLSearchParams(location.search).has('visning'))document.body.classList.a
 const teams=[
   {name:"VASK Blå",color:"#185FA5",bg:"#E6F1FB",text:"#0C447C",date:"2026-09-05",
    players:["Ella Færden","Ebba Lindh Eikenæs","Live Jor Løkke","Frida Sonesson Kaaløy","Hedda Josefine Skutholm Pettrém"],reserve:[],
-   games:[{t:"08:54–09:03",b:"BINGE 3",o:"Jutul 2 Stars 2"},{t:"09:18–09:27",b:"BINGE 1",o:"Ready 3"},{t:"09:54–10:03",b:"BINGE 2",o:"Heming Rød"}]},
+   games:[{t:"09:30–09:39",b:"BINGE 2",o:"Heming Rød"},{t:"10:18–10:27",b:"BINGE 1",o:"Jutul 2 Stars 2"},{t:"10:54–11:03",b:"BINGE 3",o:"Ready 3"}]},
   {name:"VASK Grønn",color:"#3B6D11",bg:"#EAF3DE",text:"#27500A",date:"2026-09-05",
    players:["Jenny Staalnacke","Lykke Voraa","Arwa Alnazir Abdulqader Nouren","Ethar Alnazir Abdulqader Nouren"],reserve:[],
-   games:[{t:"08:42–08:51",b:"BINGE 2",o:"Ready 2"},{t:"09:30–09:39",b:"BINGE 1",o:"Heming Grønn"},{t:"10:18–10:27",b:"BINGE 3",o:"Ready 5"}]},
+   games:[{t:"08:42–08:51",b:"BINGE 1",o:"Ready 2"},{t:"09:18–09:27",b:"BINGE 2",o:"Heming Grønn"},{t:"10:06–10:15",b:"BINGE 3",o:"Ready 5"}]},
   {name:"VASK Lilla",color:"#534AB7",bg:"#EEEDFE",text:"#3C3489",date:"2026-09-05",
    players:["Johanne Koch Jahre","Amalie Tuchel Da Graca","Rona Lushta","Zyns Olea Yambao"],reserve:[],
-   games:[{t:"10:42–10:51",b:"BINGE 1",o:"Ready 4"},{t:"11:06–11:15",b:"BINGE 1",o:"Lyn Berg"},{t:"11:42–11:51",b:"BINGE 1",o:"Heming Hvit"}]},
+   games:[{t:"08:30–08:39",b:"BINGE 3",o:"Ready 4"},{t:"09:06–09:15",b:"BINGE 2",o:"Lyn Berg"},{t:"09:42–09:51",b:"BINGE 1",o:"Heming Hvit"}]},
   {name:"VASK Rød",color:"#993C1D",bg:"#FAECE7",text:"#712B13",date:"2026-09-05",
    players:["Nora Ulvund Byrkjeland","Zlata Matviienko","Alexa Sander","Helene Schiøtz"],reserve:[],
-   games:[{t:"10:18–10:27",b:"BINGE 2",o:"Heming Blå"},{t:"10:42–10:51",b:"BINGE 3",o:"Jutul 1 Stars 1"},{t:"11:18–11:27",b:"BINGE 1",o:"Ready 1"}]},
+   games:[{t:"11:30–11:39",b:"BINGE 1",o:"Heming Blå"},{t:"12:18–12:27",b:"BINGE 2",o:"Jutul 1 Stars 1"},{t:"12:54–13:03",b:"BINGE 1",o:"Ready 1"}]},
   {name:"VASK Hauk",color:"#0F6E56",bg:"#E1F5EE",text:"#085041",date:"2026-09-06",
    players:["Filip Waage","William Olafsen-Hægland","Elias Martinuzzi","Gustav Jul-Larsen"],reserve:[],
    games:[{t:"11:00–11:09",b:"BINGE 1",o:"Try 3"},{t:"11:36–11:45",b:"BINGE 1",o:"Monolitten Blå"},{t:"12:24–12:33",b:"BINGE 2",o:"Ready 9"}]},
@@ -71,7 +71,7 @@ const teams=[
    games:[{t:"11:12–11:21",b:"BINGE 2",o:"Ready 1"},{t:"11:48–11:57",b:"BINGE 2",o:"Ullern Dragons 21"},{t:"12:24–12:33",b:"BINGE 3",o:"Kjelsås Galacticos"}]},
   {name:"VASK Ørn",color:"#A67C1E",bg:"#FBF2DE",text:"#7A5B14",date:"2026-09-06",
    players:["Filip Hals","Sverre Fredriksen Hoel","Ask Woldseth Jerkø","Wilmer Skaara","Mathias Hals"],reserve:[],
-   games:[{t:"11:12–11:21",b:"BINGE 3",o:"Ready 7"},{t:"12:00–12:09",b:"BINGE 1",o:"Monolitten Gul"},{t:"12:36–12:45",b:"BINGE 3",o:"Lille Tøyen Rød"}]}
+   games:[{t:"11:12–11:21",b:"BINGE 3",o:"Ready 7"},{t:"12:00–12:09",b:"BINGE 1",o:"Monolitten Gul"},{t:"12:36–12:45",b:"BINGE 3",o:"Lyn Berg 3"}]}
 ];
 const STORAGE_KEY='lagleder_app_v1';
 const TOURNAMENT_DATE='2026-09-06';
