@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VASK Lag – OBOS Miniliga Haslum Cup 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f3;padding:24px;color:#1a1a1a}
+h1{font-size:18px;font-weight:500;margin-bottom:20px;color:#444}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.card{background:#fff;border:1px solid #e5e5e2;border-radius:12px;overflow:hidden}
+.card-header{padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #e5e5e2}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.card-title{font-size:15px;font-weight:500;flex:1}
+.add-btn{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #d0d0cc;background:#fafaf8;color:#444;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+.add-btn:hover:not(:disabled){background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.add-btn.done{background:#e6f5ee;color:#0f6e56;border-color:#a8d9c0;cursor:default}
+.card-body{padding:0 16px}
+.section-label{font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:#999;padding:10px 0 6px;border-bottom:1px solid #e5e5e2}
+.player-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f0f0ee}
+.player-row:last-child{border-bottom:none}
+.avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0}
+.player-name{font-size:13px}
+.player-name.reserve{color:#BA7517}
+.game-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f0f0ee}
+.game-item:last-child{border-bottom:none}
+.game-time{font-size:12px;font-weight:500;min-width:60px}
+.badge{font-size:11px;padding:2px 8px;border-radius:6px;white-space:nowrap;background:#E6F1FB;color:#0C447C}
+.game-opp{font-size:12px;color:#666}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#444;background:#fff;border:1px solid #e5e5e2;border-radius:8px;padding:6px 14px;cursor:pointer;text-decoration:none;margin-bottom:16px;transition:background .15s,color .15s,border-color .15s}
+.back-btn:hover{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.back-btn svg{width:14px;height:14px;flex-shrink:0}
+.readonly .back-btn{display:none}
+.readonly .add-btn{display:none}
+.group-label{font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#666;margin:24px 0 12px;padding-bottom:8px;border-bottom:2px solid #e5e5e2}
+.group-label:first-of-type{margin-top:0}
+</style>
+</head>
+<body>
+<a href="/" class="back-btn">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  Tilbake til app
+</a>
+<h1>OBOS Miniliga Haslum Cup 2026 – VASK-lagene <span style="font-weight:400;color:#aaa">· Lørdag 19. september</span></h1>
+<div id="content"></div>
+<script>
+if(new URLSearchParams(location.search).has('visning'))document.body.classList.add('readonly');
+const teams=[
+  {
+    "name": "VASK Løve",
+    "kjonn": "jenter",
+    "color": "#0F6E56",
+    "bg": "#E1F5EE",
+    "text": "#085041",
+    "players": [
+      "Ella Færden",
+      "Andrea Tanem",
+      "Milli Høvik Helseth"
+    ],
+    "reserve": [],
+    "games": [
+      {
+        "t": "16:10",
+        "b": "BANE 4",
+        "o": "Haslum Idrettslag 2"
+      },
+      {
+        "t": "16:30",
+        "b": "BANE 6",
+        "o": "Ready Idrettsforeningen Fjellrever"
+      },
+      {
+        "t": "16:50",
+        "b": "BANE 4",
+        "o": "Øvrevoll Hosle IL"
+      },
+      {
+        "t": "17:10",
+        "b": "BANE 6",
+        "o": "Korsvoll Idrettslag Superstars"
+      },
+      {
+        "t": "17:30",
+        "b": "BANE 10",
+        "o": "Røa Allianseidrettslag Blå"
+      }
+    ]
+  },
+  {
+    "name": "VASK City",
+    "kjonn": "jenter",
+    "color": "#993C1D",
+    "bg": "#FAECE7",
+    "text": "#712B13",
+    "players": [
+      "Evelyn Syran",
+      "Signe Moe",
+      "Rona Lushta"
+    ],
+    "reserve": [],
+    "games": [
+      {
+        "t": "15:30",
+        "b": "BANE 6",
+        "o": "Røa Allianseidrettslag Hvit"
+      },
+      {
+        "t": "15:50",
+        "b": "BANE 5",
+        "o": "Heming Idrettslaget BLÅ"
+      },
+      {
+        "t": "16:10",
+        "b": "BANE 3",
+        "o": "Korsvoll Idrettslag Playmakers"
+      },
+      {
+        "t": "16:30",
+        "b": "BANE 10",
+        "o": "Haslum Idrettslag 3"
+      },
+      {
+        "t": "17:00",
+        "b": "BANE 9",
+        "o": "Ready Idrettsforeningen Gauper"
+      }
+    ]
+  },
+  {
+    "name": "VASK FC Jenter",
+    "kjonn": "jenter",
+    "color": "#185FA5",
+    "bg": "#E6F1FB",
+    "text": "#0C447C",
+    "players": [
+      "Alexa Sander",
+      "Live Jor Løkke",
+      "Zyns Olea Yambao"
+    ],
+    "reserve": [],
+    "games": [
+      {
+        "t": "15:30",
+        "b": "BANE 4",
+        "o": "Haslum Idrettslag 1"
+      },
+      {
+        "t": "15:50",
+        "b": "BANE 9",
+        "o": "Ullern Idrettsforening"
+      },
+      {
+        "t": "16:10",
+        "b": "BANE 10",
+        "o": "Heming Idrettslaget LILLA"
+      },
+      {
+        "t": "16:30",
+        "b": "BANE 8",
+        "o": "Øvrevoll Hosle IL Grav"
+      },
+      {
+        "t": "17:00",
+        "b": "BANE 7",
+        "o": "Ready Idrettsforeningen Leoparder"
+      }
+    ]
+  },
+  {
+    "name": "VASK United",
+    "kjonn": "gutter",
+    "color": "#3B6D11",
+    "bg": "#EAF3DE",
+    "text": "#27500A",
+    "players": [
+      "Johannes Vangbo Woxen",
+      "Filip Waage",
+      "Elias Martinuzzi",
+      "Matheo Storaas Kristoffersen",
+      "Jeppe Engebret Rød Soot",
+    ],
+    "reserve": [],
+    "games": [
+      {
+        "t": "13:40",
+        "b": "BANE 1",
+        "o": "Snarøya Sportsklubb Grønn"
+      },
+      {
+        "t": "14:00",
+        "b": "BANE 11",
+        "o": "Ready Idrettsforeningen 7"
+      },
+      {
+        "t": "14:30",
+        "b": "BANE 11",
+        "o": "Bærums Verk Hauger Idrettsforening…"
+      },
+      {
+        "t": "14:50",
+        "b": "BANE 3",
+        "o": "Oppsal IF Fotball 2"
+      },
+      {
+        "t": "15:10",
+        "b": "BANE 11",
+        "o": "Haslum Idrettslag 15"
+      }
+    ]
+  },
+  {
+    "name": "VASK FC Gutter",
+    "kjonn": "gutter",
+    "color": "#185FA5",
+    "bg": "#E6F1FB",
+    "text": "#0C447C",
+    "players": [
+      "Sverre Fredriksen Hoel",
+      "Adam Wold",
+      "Gustav Jul-Larsen",
+      "Alexander Bjørnstad",
+      "Milan Grinsted",
+      "Wilmer Skaara"
+    ],
+    "reserve": [],
+    "games": [
+      {
+        "t": "15:40",
+        "b": "BANE 6",
+        "o": "Ready Idrettsforeningen 3"
+      },
+      {
+        "t": "16:00",
+        "b": "BANE 9",
+        "o": "Ullern Idrettsforening Bestum 1"
+      },
+      {
+        "t": "16:30",
+        "b": "BANE 9",
+        "o": "Oppsal IF Fotball 5"
+      },
+      {
+        "t": "16:50",
+        "b": "BANE 7",
+        "o": "Korsvoll Idrettslag Gaupe"
+      },
+      {
+        "t": "17:20",
+        "b": "BANE 10",
+        "o": "Haslum Idrettslag 3"
+      }
+    ]
+  },
+  {
+    "name": "VASK Hotspurs",
+    "kjonn": "gutter",
+    "color": "#993556",
+    "bg": "#FBEAF0",
+    "text": "#72243E",
+    "players": [
+      "Filip Hals",
+      "Nils Herman Wold Ellingsen",
+      "Mathias Hals",
+      "Lucas Storm Lundborg Braathen",
+      "Petter Protosevich",
+      "Hans Olav Bergseth-Hasle"
+    ],
+    "reserve": [],
+    "games": [
+      {
+        "t": "10:00",
+        "b": "BANE 4",
+        "o": "Ullern Idrettsforening Bestum 3"
+      },
+      {
+        "t": "10:20",
+        "b": "BANE 4",
+        "o": "Bærums Verk Hauger Idrettsforening…"
+      },
+      {
+        "t": "10:40",
+        "b": "BANE 2",
+        "o": "Heming Idrettslaget SLE 3"
+      },
+      {
+        "t": "11:00",
+        "b": "BANE 11",
+        "o": "Haslum Idrettslag 9"
+      },
+      {
+        "t": "11:20",
+        "b": "BANE 6",
+        "o": "Stabæk Fotball 2"
+      },
+      {
+        "t": "11:40",
+        "b": "BANE 3",
+        "o": "Haslum Idrettslag 7"
+      }
+    ]
+  },
+  {
+    "name": "VASK Thunder",
+    "kjonn": "gutter",
+    "color": "#534AB7",
+    "bg": "#EEEDFE",
+    "text": "#3C3489",
+    "players": [
+      "Ask Woldseth Jerkø",
+      "Mohamad Ahmed Alyosef",
+      "Erik Storhaug Aarseth",
+      "Falke Vilnes",
+      "Jakob Browne Runde"
+    ],
+    "reserve": [],
+    "games": [
+      {
+        "t": "15:40",
+        "b": "BANE 7",
+        "o": "Bærums Verk Hauger Idrettsforening…"
+      },
+      {
+        "t": "16:00",
+        "b": "BANE 2",
+        "o": "Haslum Idrettslag 5"
+      },
+      {
+        "t": "16:30",
+        "b": "BANE 11",
+        "o": "Korsvoll Idrettslag Løver"
+      },
+      {
+        "t": "16:50",
+        "b": "BANE 8",
+        "o": "Lommedalen Idrettslag Hvit"
+      },
+      {
+        "t": "17:20",
+        "b": "BANE 7",
+        "o": "Heming Idrettslaget SVE 1"
+      }
+    ]
+  }
+];
+const STORAGE_KEY='lagleder_app_v1';
+const TOURNAMENT_DATE='2026-09-19';
+const DEFAULT_SETTINGS={playersOnField:3,numberOfHalves:1,halfDuration:9,subInterval:2,firstSubTime:2};
+
+function genId(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36)}
+
+function buildSubQueue(matchPlayers,subIntervalSec,firstSubTimeSec){
+  const field=[...matchPlayers.filter(p=>p.onField)].sort((a,b)=>a.lastEventTime-b.lastEventTime);
+  const bench=[...matchPlayers.filter(p=>!p.onField)].sort((a,b)=>a.lastEventTime-b.lastEventTime);
+  const virgins=bench.filter(p=>p.fieldSeconds===0);
+  const ordered=[...virgins,...bench.filter(p=>p.fieldSeconds>0)];
+  const useFirst=firstSubTimeSec>0&&virgins.length>0;
+  const virginBase=useFirst?Math.max(firstSubTimeSec,60):0;
+  const q=[];let lastDue=0;
+  for(let i=0;i<Math.min(field.length,ordered.length);i++){
+    const isV=i<virgins.length;
+    let due=useFirst&&isV?virginBase+i*60:useFirst?lastDue+subIntervalSec:(i+1)*subIntervalSec;
+    lastDue=due;
+    q.push({outId:field[i].playerId,inId:ordered[i].playerId,dueTime:due});
+  }
+  return q.sort((a,b)=>a.dueTime-b.dueTime);
+}
+
+function loadAppState(){
+  try{const r=localStorage.getItem(STORAGE_KEY);return r?JSON.parse(r):null}catch{return null}
+}
+
+function teamAlreadyAdded(name){
+  const s=loadAppState();
+  return s&&s.teams&&s.teams.some(t=>t.name===name);
+}
+
+function addTeamToApp(teamDef){
+  const raw=loadAppState();
+  const state=raw||{teams:[],activeTeamId:null,matches:[],defaultSettings:DEFAULT_SETTINGS};
+  const settings={...DEFAULT_SETTINGS,...(state.defaultSettings||{})};
+  const teamId=genId();
+  const players=teamDef.players.map(full=>({id:genId(),name:full.trim().split(' ')[0]}));
+  const team={id:teamId,name:teamDef.name,players};
+  const matches=teamDef.games.map(g=>({
+    id:genId(),teamId,
+    opponent:g.o,
+    date:TOURNAMENT_DATE,
+    time:g.t,
+    location:g.b,
+    status:'pending',
+    settings:{...settings},
+    matchPlayers:players.map((p,i)=>({playerId:p.id,fieldSeconds:0,benchSeconds:0,keeperSeconds:0,lastEventTime:0,onField:i<settings.playersOnField,lineupOrder:i})),
+    elapsedSeconds:0,substitutions:[],
+    subQueue:buildSubQueue(players.map((p,i)=>({playerId:p.id,fieldSeconds:0,benchSeconds:0,lastEventTime:0,onField:i<settings.playersOnField,lineupOrder:i})),settings.subInterval*60,(settings.firstSubTime??0)*60),
+    preset:state.selectedPreset
+  }));
+  state.teams.push(team);
+  state.matches.push(...matches);
+  state.activeTeamId=teamId;
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+}
+
+function ini(n){const p=n.trim().split(" ");return(p[0][0]+(p[p.length-1][0])).toUpperCase()}
+function timeToMinutes(t){const[h,m]=t.split(":").map(Number);return h*60+m}
+function firstGameMinutes(t){return Math.min(...t.games.map(g=>timeToMinutes(g.t)))}
+
+function renderTeamCard(t){
+  const res=new Set(t.reserve);
+  const alreadyAdded=teamAlreadyAdded(t.name);
+  const card=document.createElement("div");
+  card.className="card";
+  card.innerHTML=`
+    <div class="card-header">
+      <div class="dot" style="background:${t.color}"></div>
+      <span class="card-title">${t.name}</span>
+      <button class="add-btn${alreadyAdded?' done':''}" ${alreadyAdded?'disabled':''} data-team="${t.name}">
+        ${alreadyAdded?'Lagt til ✓':'Legg til lag og kamper'}
+      </button>
+    </div>
+    <div class="card-body">
+      <div class="section-label">Spillere (${t.players.length})</div>
+      <div>${t.players.map(p=>`<div class="player-row"><div class="avatar" style="background:${t.bg};color:${t.text}">${ini(p)}</div><span class="player-name${res.has(p)?' reserve':''}">${p}</span></div>`).join("")}</div>
+      <div class="section-label">Kamper (${t.games.length})</div>
+      <div>${t.games.map(g=>`<div class="game-item"><span class="game-time">⏱ ${g.t}</span><span class="badge">${g.b}</span><span class="game-opp">vs ${g.o}</span></div>`).join("")}</div>
+    </div>`;
+  const btn=card.querySelector('.add-btn');
+  if(!alreadyAdded){
+    btn.addEventListener('click',()=>{
+      addTeamToApp(t);
+      window.location.href='/';
+    });
+  }
+  return card;
+}
+
+const content=document.getElementById("content");
+const groups=[
+  {key:"gutter",label:"Gutter"},
+  {key:"jenter",label:"Jenter"}
+];
+groups.forEach(({key,label})=>{
+  const groupTeams=teams.filter(t=>t.kjonn===key).sort((a,b)=>firstGameMinutes(a)-firstGameMinutes(b));
+  if(groupTeams.length===0)return;
+  const heading=document.createElement("div");
+  heading.className="group-label";
+  heading.textContent=label;
+  content.appendChild(heading);
+  const grid=document.createElement("div");
+  grid.className="grid";
+  groupTeams.forEach(t=>grid.appendChild(renderTeamCard(t)));
+  content.appendChild(grid);
+});
+</script>
+</body>
+</html>
