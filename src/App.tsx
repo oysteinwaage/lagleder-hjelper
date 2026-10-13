@@ -79,10 +79,10 @@ export default function App() {
           </div>
 
           <a
-            href="/kampoppsett-obos-miniliga-haslum-cup"
+            href="/kampoppsett-obos-miniliga-ullern-cup"
             className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-[#003087] hover:bg-[#002070] text-white text-sm font-medium transition-colors"
           >
-            <span>🏆</span> Obos Miniliga Haslum Cup Kampoppsett
+            <span>🏆</span> Obos Miniliga Ullern Cup Kampoppsett
           </a>
 
           {/* Manual team creation */}
@@ -212,10 +212,10 @@ export default function App() {
             <Settings size={16} /> Admin
           </button>
           <a
-            href="/kampoppsett-obos-miniliga-haslum-cup"
+            href="/kampoppsett-obos-miniliga-ullern-cup"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-[#5b8fd4] hover:text-white hover:bg-[#003087] transition-colors"
           >
-            🏆 Obos Miniliga Haslum Cup
+            🏆 Obos Miniliga Ullern Cup
           </a>
         </div>
       </nav>
