@@ -123,6 +123,18 @@ export function useAppStore() {
     [setState]
   );
 
+  const updateTeamDetails = useCallback(
+    (location: string, date: string) => {
+      setState((s) => ({
+        ...s,
+        teams: s.teams.map((t) =>
+          t.id === s.activeTeamId ? { ...t, location: location || undefined, date: date || undefined } : t
+        ),
+      }));
+    },
+    [setState]
+  );
+
   const addPlayer = useCallback(
     (name: string) => {
       setState((s) => ({
@@ -368,6 +380,7 @@ export function useAppStore() {
     createTeam,
     selectTeam,
     updateTeam,
+    updateTeamDetails,
     addPlayer,
     removePlayer,
     updatePlayer,

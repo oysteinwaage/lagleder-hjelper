@@ -7,6 +7,8 @@ export interface Team {
   id: string;
   name: string;
   players: Player[];
+  location?: string;
+  date?: string;
 }
 
 export interface MatchSettings {
