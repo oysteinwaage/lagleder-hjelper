@@ -132,7 +132,7 @@ const teams=[
     ]
   },
   {
-    "name": "VASK FC Jenter",
+    "name": "VASK FC",
     "kjonn": "jenter",
     "color": "#185FA5",
     "bg": "#E6F1FB",
@@ -255,7 +255,7 @@ const teams=[
     ]
   },
   {
-    "name": "VASK FC Gutter",
+    "name": "VASK FC",
     "kjonn": "gutter",
     "color": "#185FA5",
     "bg": "#E6F1FB",
@@ -370,9 +370,9 @@ function loadAppState(){
   try{const r=localStorage.getItem(STORAGE_KEY);return r?JSON.parse(r):null}catch{return null}
 }
 
-function teamAlreadyAdded(name){
+function teamAlreadyAdded(def){
   const s=loadAppState();
-  return s&&s.teams&&s.teams.some(t=>t.name===name&&t.location===CUP_NAME&&t.date===TOURNAMENT_DATE);
+  return s&&s.teams&&s.teams.some(t=>t.name===def.name&&t.location===CUP_NAME&&t.date===TOURNAMENT_DATE&&(!t.kjonn||t.kjonn===def.kjonn));
 }
 
 function addTeamToApp(teamDef){
@@ -381,7 +381,7 @@ function addTeamToApp(teamDef){
   const settings={...DEFAULT_SETTINGS,...(state.defaultSettings||{})};
   const teamId=genId();
   const players=teamDef.players.map(full=>({id:genId(),name:full.trim().split(' ')[0]}));
-  const team={id:teamId,name:teamDef.name,players,location:CUP_NAME,date:TOURNAMENT_DATE};
+  const team={id:teamId,name:teamDef.name,players,location:CUP_NAME,date:TOURNAMENT_DATE,kjonn:teamDef.kjonn};
   const matches=teamDef.games.map(g=>({
     id:genId(),teamId,
     opponent:g.o,
@@ -407,7 +407,7 @@ function firstGameMinutes(t){return Math.min(...t.games.map(g=>timeToMinutes(g.t
 
 function renderTeamCard(t){
   const res=new Set(t.reserve);
-  const alreadyAdded=teamAlreadyAdded(t.name);
+  const alreadyAdded=teamAlreadyAdded(t);
   const card=document.createElement("div");
   card.className="card";
   card.innerHTML=`
